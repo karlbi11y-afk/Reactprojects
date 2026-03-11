@@ -1,0 +1,17 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Ink Revenue">
+  <defs>
+    <linearGradient id="silver" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#858489" />
+      <stop offset="0.25" stop-color="#e7e4ef" />
+      <stop offset="0.5" stop-color="#858489" />
+      <stop offset="0.75" stop-color="#b9b9b9" />
+      <stop offset="1" stop-color="#858489" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="#0d203b" />
+  <g transform="translate(256 256) rotate(45)">
+    <rect x="-150" y="-150" width="300" height="300" fill="none" stroke="#2e6fa3" stroke-width="14" />
+  </g>
+  <text x="256" y="262" text-anchor="middle" font-family="Space Grotesk, Segoe UI, sans-serif" font-size="96" font-weight="700" fill="url(#silver)">INK</text>
+  <text x="256" y="332" text-anchor="middle" font-family="Space Grotesk, Segoe UI, sans-serif" font-size="56" font-weight="600" fill="url(#silver)">Revenue</text>
+</svg>
