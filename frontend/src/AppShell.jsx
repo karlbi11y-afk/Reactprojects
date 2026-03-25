@@ -1,8 +1,10 @@
+import { LegalConsentProvider, useLegalConsent } from "./contexts/LegalConsentContext";
 import { SiteFooter } from "./components/SiteFooter";
 import { SiteHeader } from "./components/SiteHeader";
 import { createDemoStudioPreview } from "./data/demoStudio";
 import { HomePage } from "./pages/HomePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { StudioCrmPreviewPage } from "./pages/StudioCrmPreviewPage";
 import { StudioProfilePage } from "./pages/StudioProfilePage";
 import { StudiosDirectoryPage } from "./pages/StudiosDirectoryPage";
 import { useSiteLocation } from "./utils/siteRouter";
@@ -19,6 +21,13 @@ function getPageFromPath(pathname) {
     return {
       currentPath: pathname,
       element: <StudiosDirectoryPage />
+    };
+  }
+
+  if (pathname === "/studio-crm-preview") {
+    return {
+      currentPath: "/studios",
+      element: <StudioCrmPreviewPage />
     };
   }
 
@@ -53,15 +62,24 @@ function getPageFromPath(pathname) {
   };
 }
 
-export default function App() {
+function AppContent() {
   const location = useSiteLocation();
   const page = getPageFromPath(location.pathname);
+  const { openLegalModal } = useLegalConsent();
 
   return (
     <div>
       <SiteHeader currentPath={page.currentPath} />
       <main>{page.element}</main>
-      <SiteFooter />
+      <SiteFooter onOpenLegalModal={openLegalModal} />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <LegalConsentProvider>
+      <AppContent />
+    </LegalConsentProvider>
   );
 }

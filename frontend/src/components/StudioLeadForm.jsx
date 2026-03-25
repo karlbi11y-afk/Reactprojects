@@ -1,5 +1,8 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { FormLegalLinks } from "./FormLegalLinks";
+import { useLegalConsent } from "../contexts/LegalConsentContext";
 import { createPublicStudioLead } from "../services/publicSiteApi";
+import { useAbandonedFormDraft } from "../hooks/useAbandonedFormDraft";
 import { getTrackingPayload } from "../utils/tracking";
 import { prepareLeadImageUpload } from "../utils/prepareLeadImageUpload";
 
@@ -12,18 +15,63 @@ const initialForm = {
   size: "",
   budget: "",
   description: "",
-  privacyConsent: false,
-  marketingConsent: false,
   website: ""
 };
+
+function computeError(name, formData, touchedState) {
+  if (!touchedState[name]) return "";
+  switch (name) {
+    case "name":
+      return formData.name.trim().length < 2 ? "Fyll i ditt namn." : "";
+    case "email":
+      if (!formData.email.trim() && !formData.phone.trim()) {
+        return "Ange minst din e-post eller ditt telefonnummer.";
+      }
+      if (
+        formData.email.trim() &&
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())
+      ) {
+        return "Ange en giltig e-postadress.";
+      }
+      return "";
+    case "description":
+      return !formData.description.trim() ? "Beskriv motiv och önskemål." : "";
+    default:
+      return "";
+  }
+}
 
 export function StudioLeadForm({ studio, introText = "" }) {
   const [formData, setFormData] = useState(initialForm);
   const [status, setStatus] = useState({ state: "idle", message: "" });
   const [inspirationImage, setInspirationImage] = useState(null);
   const [imageProcessing, setImageProcessing] = useState(false);
+  const [touched, setTouched] = useState({});
   const canSubmit = Boolean(studio?.slug);
   const fileInputRef = useRef(null);
+  const { hasAcceptedConsent, openLegalModal } = useLegalConsent();
+  const draftPayload = useMemo(
+    () => ({
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      tattooStyle: formData.tattooStyle,
+      placement: formData.placement,
+      size: formData.size,
+      budget: formData.budget,
+      description: formData.description,
+      privacyConsent: hasAcceptedConsent,
+      marketingConsent: false,
+      website: formData.website
+    }),
+    [formData, hasAcceptedConsent]
+  );
+  const { draftId, clearDraft } = useAbandonedFormDraft({
+    type: "studio_lead",
+    studioSlug: studio?.slug || "",
+    payload: draftPayload,
+    enabled: canSubmit
+  });
 
   function handleChange(event) {
     const { name, type, value, checked } = event.target;
@@ -31,6 +79,15 @@ export function StudioLeadForm({ studio, introText = "" }) {
       ...current,
       [name]: type === "checkbox" ? checked : value
     }));
+  }
+
+  function handleBlur(event) {
+    const { name } = event.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+  }
+
+  function getFieldError(name) {
+    return computeError(name, formData, touched);
   }
 
   async function handleImageChange(event) {
@@ -68,6 +125,15 @@ export function StudioLeadForm({ studio, introText = "" }) {
   async function handleSubmit(event) {
     event.preventDefault();
 
+    if (!hasAcceptedConsent) {
+      setStatus({
+        state: "error",
+        message: "Godkänn integritetspolicy och villkor för att fortsätta."
+      });
+      openLegalModal();
+      return;
+    }
+
     if (!canSubmit) {
       setStatus({
         state: "error",
@@ -78,10 +144,17 @@ export function StudioLeadForm({ studio, introText = "" }) {
       return;
     }
 
-    if (!formData.email.trim() && !formData.phone.trim()) {
+    const allTouched = { name: true, email: true, description: true };
+    setTouched(allTouched);
+
+    if (
+      computeError("name", formData, allTouched) ||
+      computeError("email", formData, allTouched) ||
+      computeError("description", formData, allTouched)
+    ) {
       setStatus({
         state: "error",
-        message: "Ange minst e-post eller telefon så att studion kan nå dig."
+        message: "Kontrollera fälten markerade i rött och försök igen."
       });
       return;
     }
@@ -91,6 +164,9 @@ export function StudioLeadForm({ studio, introText = "" }) {
     try {
       const response = await createPublicStudioLead(studio.slug, {
         ...formData,
+        privacyConsent: true,
+        marketingConsent: false,
+        draftId,
         inspirationImage: inspirationImage
           ? {
               fileName: inspirationImage.fileName,
@@ -109,6 +185,8 @@ export function StudioLeadForm({ studio, introText = "" }) {
       });
       setFormData(initialForm);
       setInspirationImage(null);
+      setTouched({});
+      clearDraft();
 
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -131,7 +209,7 @@ export function StudioLeadForm({ studio, introText = "" }) {
       </p>
 
       <div className="form-grid">
-        <label htmlFor="lead-name">
+        <label htmlFor="lead-name" className={getFieldError("name") ? "has-error" : ""}>
           Namn
           <input
             id="lead-name"
@@ -140,11 +218,16 @@ export function StudioLeadForm({ studio, introText = "" }) {
             placeholder="Ditt namn"
             value={formData.name}
             onChange={handleChange}
+            onBlur={handleBlur}
             required
+            aria-invalid={!!getFieldError("name")}
           />
+          {getFieldError("name") ? (
+            <span className="field-error" role="alert">{getFieldError("name")}</span>
+          ) : null}
         </label>
 
-        <label htmlFor="lead-email">
+        <label htmlFor="lead-email" className={getFieldError("email") ? "has-error" : ""}>
           E-post
           <input
             id="lead-email"
@@ -153,7 +236,12 @@ export function StudioLeadForm({ studio, introText = "" }) {
             placeholder="namn@mail.se"
             value={formData.email}
             onChange={handleChange}
+            onBlur={handleBlur}
+            aria-invalid={!!getFieldError("email")}
           />
+          {getFieldError("email") ? (
+            <span className="field-error" role="alert">{getFieldError("email")}</span>
+          ) : null}
         </label>
 
         <label htmlFor="lead-phone">
@@ -165,6 +253,7 @@ export function StudioLeadForm({ studio, introText = "" }) {
             placeholder="070-000 00 00"
             value={formData.phone}
             onChange={handleChange}
+            onBlur={handleBlur}
           />
         </label>
 
@@ -217,7 +306,10 @@ export function StudioLeadForm({ studio, introText = "" }) {
         </label>
       </div>
 
-      <label htmlFor="lead-description">
+      <label
+        htmlFor="lead-description"
+        className={getFieldError("description") ? "has-error" : ""}
+      >
         Berätta om din tatuering
         <textarea
           id="lead-description"
@@ -226,8 +318,13 @@ export function StudioLeadForm({ studio, introText = "" }) {
           placeholder="Beskriv motiv, känsla, referenser och allt som är viktigt för studion att veta."
           value={formData.description}
           onChange={handleChange}
+          onBlur={handleBlur}
           required
+          aria-invalid={!!getFieldError("description")}
         />
+        {getFieldError("description") ? (
+          <span className="field-error" role="alert">{getFieldError("description")}</span>
+        ) : null}
       </label>
 
       <div className="studio-lead-form__upload">
@@ -277,31 +374,7 @@ export function StudioLeadForm({ studio, introText = "" }) {
         </label>
       </div>
 
-      <label className="consent-row" htmlFor="lead-privacyConsent">
-        <input
-          id="lead-privacyConsent"
-          type="checkbox"
-          name="privacyConsent"
-          checked={formData.privacyConsent}
-          onChange={handleChange}
-          required
-        />
-        <span>
-          Jag godkänner att {studio.name} får spara mina uppgifter för att kunna svara på min
-          förfrågan.
-        </span>
-      </label>
-
-      <label className="consent-row" htmlFor="lead-marketingConsent">
-        <input
-          id="lead-marketingConsent"
-          type="checkbox"
-          name="marketingConsent"
-          checked={formData.marketingConsent}
-          onChange={handleChange}
-        />
-        <span>Jag vill kunna få återkoppling och uppföljning från studion via mejl eller sms.</span>
-      </label>
+      <FormLegalLinks />
 
       <button
         className="btn btn-primary"

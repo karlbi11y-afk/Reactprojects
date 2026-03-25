@@ -11,6 +11,12 @@ const CRM_API_BASE_URL = normalizeUrl(process.env.CRM_API_BASE_URL || "http://lo
 const submissionRateLimitState = new Map();
 const submissionWindowMs = Number(process.env.SUBMISSION_RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000);
 const submissionMaxRequests = Number(process.env.SUBMISSION_RATE_LIMIT_MAX || 6);
+const draftSaveRateLimitState = new Map();
+const draftSaveWindowMs = Number(process.env.DRAFT_SAVE_RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000);
+const draftSaveMaxRequests = Number(process.env.DRAFT_SAVE_RATE_LIMIT_MAX || 40);
+const publicReadRateLimitState = new Map();
+const publicReadWindowMs = Number(process.env.PUBLIC_READ_RATE_LIMIT_WINDOW_MS || 60 * 1000);
+const publicReadMaxRequests = Number(process.env.PUBLIC_READ_RATE_LIMIT_MAX || 20);
 
 function normalizeUrl(url) {
   return url?.trim().replace(/\/+$/, "");
@@ -59,6 +65,8 @@ function buildCrmLeadPayload(payload) {
     utmTerm: String(payload.utmTerm || "").trim(),
     gclid: String(payload.gclid || "").trim(),
     fbclid: String(payload.fbclid || "").trim(),
+    sessionId: String(payload.sessionId || "").trim(),
+    draftId: String(payload.draftId || "").trim(),
     website: String(payload.website || "").trim()
   };
 }
@@ -84,6 +92,8 @@ function buildCrmSalesLeadPayload(payload) {
     utmTerm: String(payload.utmTerm || "").trim(),
     gclid: String(payload.gclid || "").trim(),
     fbclid: String(payload.fbclid || "").trim(),
+    sessionId: String(payload.sessionId || "").trim(),
+    draftId: String(payload.draftId || "").trim(),
     website: String(payload.website || "").trim()
   };
 }
@@ -135,25 +145,58 @@ function getClientAddress(request) {
   return request.ip || request.socket?.remoteAddress || "unknown";
 }
 
-function enforceSubmissionRateLimit(request, scope) {
+function enforceRateLimit(
+  request,
+  scope,
+  { state, windowMs, maxRequests, message }
+) {
   const key = `${scope}:${getClientAddress(request)}`;
   const now = Date.now();
-  const activeAttempts = (submissionRateLimitState.get(key) || []).filter(
-    (timestamp) => now - timestamp < submissionWindowMs
+  const activeAttempts = (state.get(key) || []).filter(
+    (timestamp) => now - timestamp < windowMs
   );
 
-  if (activeAttempts.length >= submissionMaxRequests) {
+  if (activeAttempts.length >= maxRequests) {
     return {
       limited: true,
-      message:
-        "Vi har tagit emot många försök från samma anslutning på kort tid. Vänta en stund och försök igen."
+      message
     };
   }
 
   activeAttempts.push(now);
-  submissionRateLimitState.set(key, activeAttempts);
+  state.set(key, activeAttempts);
 
   return { limited: false };
+}
+
+function enforceSubmissionRateLimit(request, scope) {
+  return enforceRateLimit(request, scope, {
+    state: submissionRateLimitState,
+    windowMs: submissionWindowMs,
+    maxRequests: submissionMaxRequests,
+    message:
+      "Vi har tagit emot många försök från samma anslutning på kort tid. Vänta en stund och försök igen."
+  });
+}
+
+function enforcePublicReadRateLimit(request, scope) {
+  return enforceRateLimit(request, scope, {
+    state: publicReadRateLimitState,
+    windowMs: publicReadWindowMs,
+    maxRequests: publicReadMaxRequests,
+    message:
+      "Vi har tagit emot många förfrågningar om lediga tider från samma anslutning. Vänta en kort stund och försök igen."
+  });
+}
+
+function enforceDraftSaveRateLimit(request, scope) {
+  return enforceRateLimit(request, scope, {
+    state: draftSaveRateLimitState,
+    windowMs: draftSaveWindowMs,
+    maxRequests: draftSaveMaxRequests,
+    message:
+      "Vi har tagit emot många sparningar från samma anslutning på kort tid. Vänta en stund och försök igen."
+  });
 }
 
 app.use(
@@ -227,6 +270,75 @@ app.get("/api/public/studios/:slug", async (req, res) => {
   }
 });
 
+app.get("/api/public/studios/:slug/availability", async (req, res) => {
+  const rateLimit = enforcePublicReadRateLimit(req, "studio-public-availability");
+
+  if (rateLimit.limited) {
+    return res.status(429).json({
+      message: rateLimit.message
+    });
+  }
+
+  try {
+    const { response, payload } = await requestCrmPublicApi(
+      `/studios/${encodeURIComponent(req.params.slug)}/availability`,
+      {
+        query: req.query,
+        request: req
+      }
+    );
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        message: getCrmProxyMessage(payload, "Kunde inte hämta lediga tider just nu.")
+      });
+    }
+
+    return res.status(response.status).json(payload || { data: null });
+  } catch (error) {
+    console.error("Kunde inte hämta publik tillgänglighet från CRM:", error);
+
+    return res.status(502).json({
+      message: "Kunde inte ansluta till CRM-backenden för att läsa lediga tider."
+    });
+  }
+});
+
+app.post("/api/public/studios/:slug/booking-preview", async (req, res) => {
+  const rateLimit = enforcePublicReadRateLimit(req, "studio-public-booking-preview");
+
+  if (rateLimit.limited) {
+    return res.status(429).json({
+      message: rateLimit.message
+    });
+  }
+
+  try {
+    const { response, payload } = await requestCrmPublicApi(
+      `/studios/${encodeURIComponent(req.params.slug)}/booking-preview`,
+      {
+        method: "POST",
+        body: req.body || {},
+        request: req
+      }
+    );
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        message: getCrmProxyMessage(payload, "Kunde inte avgöra direktbokning just nu.")
+      });
+    }
+
+    return res.status(response.status).json(payload || { data: null });
+  } catch (error) {
+    console.error("Kunde inte hämta publik bokningspreview från CRM:", error);
+
+    return res.status(502).json({
+      message: "Kunde inte ansluta till CRM-backenden för att kontrollera direktbokning."
+    });
+  }
+});
+
 app.post("/api/public/studios/:slug/leads", async (req, res) => {
   const rateLimit = enforceSubmissionRateLimit(req, "studio-public-lead");
 
@@ -258,6 +370,73 @@ app.post("/api/public/studios/:slug/leads", async (req, res) => {
 
     return res.status(502).json({
       message: "Kunde inte ansluta till CRM-backenden för att skicka förfrågan."
+    });
+  }
+});
+
+app.post("/api/public/studios/:slug/lead-drafts", async (req, res) => {
+  const rateLimit = enforceDraftSaveRateLimit(req, "studio-public-lead-draft");
+
+  if (rateLimit.limited) {
+    return res.status(429).json({
+      message: rateLimit.message
+    });
+  }
+
+  try {
+    const { response, payload } = await requestCrmPublicApi(
+      `/studios/${encodeURIComponent(req.params.slug)}/lead-drafts`,
+      {
+        method: "POST",
+        body: req.body || {},
+        request: req
+      }
+    );
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        message: getCrmProxyMessage(payload, "Kunde inte spara det påbörjade formuläret just nu.")
+      });
+    }
+
+    return res.status(response.status).json(payload || { data: null });
+  } catch (error) {
+    console.error("Kunde inte spara publikt studio-utkast i CRM:", error);
+
+    return res.status(502).json({
+      message: "Kunde inte ansluta till CRM-backenden för att spara utkastet."
+    });
+  }
+});
+
+app.post("/api/public/sales-lead-drafts", async (req, res) => {
+  const rateLimit = enforceDraftSaveRateLimit(req, "strategy-call-draft");
+
+  if (rateLimit.limited) {
+    return res.status(429).json({
+      message: rateLimit.message
+    });
+  }
+
+  try {
+    const { response, payload } = await requestCrmPublicApi("/sales-lead-drafts", {
+      method: "POST",
+      body: req.body || {},
+      request: req
+    });
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        message: getCrmProxyMessage(payload, "Kunde inte spara det påbörjade formuläret just nu.")
+      });
+    }
+
+    return res.status(response.status).json(payload || { data: null });
+  } catch (error) {
+    console.error("Kunde inte spara publikt strategisamtals-utkast i CRM:", error);
+
+    return res.status(502).json({
+      message: "Kunde inte ansluta till CRM-backenden för att spara utkastet."
     });
   }
 });

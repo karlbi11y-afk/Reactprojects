@@ -74,6 +74,33 @@ export function createDemoStudioPreview({ submitSlug = "" } = {}) {
     previewMode: true,
     previewDisabledMessage:
       "Det har ar en ren preview utan CRM-koppling annu. Oppna /studio-preview/din-slug for att testa formularet mot en riktig studio i CRM.",
+    bookingFlow: {
+      enabled: true,
+      defaultPresetId: "demo-fineline",
+      presets: [
+        {
+          id: "demo-fineline",
+          name: "Liten fineline",
+          description: "Små motiv och enklare text som ofta går att planera direkt.",
+          suggestedType: "tattoo_session",
+          durationMinutes: 60
+        },
+        {
+          id: "demo-consultation",
+          name: "Konsultation",
+          description: "För större idéer eller när ni vill prata igenom upplägget först.",
+          suggestedType: "consultation",
+          durationMinutes: 30
+        }
+      ],
+      calendar: {
+        enabled: true,
+        availableWeekdays: [1, 2, 3, 4, 5],
+        dailyStartHour: 10,
+        dailyEndHour: 18,
+        slotIntervalMinutes: 30
+      }
+    },
     publicProfile: {
       enabled: Boolean(normalizedSubmitSlug),
       showInDirectory: false,

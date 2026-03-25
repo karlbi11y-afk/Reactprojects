@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { buildPageTitle, usePageMetadata } from "../utils/pageMetadata";
 import { SiteLink } from "../utils/siteRouter";
 import { getPublicStudioBySlug } from "../services/publicSiteApi";
-import { StudioLeadForm } from "../components/StudioLeadForm";
+import { StudioLeadFormEnhanced } from "../components/StudioLeadFormEnhanced";
 
 function getStudioTags(studio) {
   return [
@@ -72,6 +72,10 @@ export function StudioProfilePage({ slug = "", studioOverride = null, previewMod
 
   const studioTags = useMemo(() => (studio ? [...new Set(getStudioTags(studio))] : []), [studio]);
   const previewMessage = useMemo(() => {
+    if (studio?.previewMessage) {
+      return studio.previewMessage;
+    }
+
     if (!previewMode || !studio) {
       return "";
     }
@@ -82,7 +86,20 @@ export function StudioProfilePage({ slug = "", studioOverride = null, previewMod
 
     return "Det här är en lokal demosida för snabbtest. För att testa riktiga leads kan du öppna /studio-preview/din-slug.";
   }, [previewMode, studio]);
-  const galleryCount = studio?.publicProfile?.galleryImageUrls?.length || 0;
+  const publicProfile = studio?.publicProfile || {};
+  const heroLeadText = String(publicProfile.headline || "").trim();
+  const cardSummary = String(publicProfile.cardSummary || "").trim();
+  const aboutText = String(publicProfile.intro || studio?.description || "").trim();
+  const serviceArea = String(publicProfile.serviceArea || "").trim();
+  const websiteUrl = String(publicProfile.websiteUrl || "").trim();
+  const instagramUrl = String(publicProfile.instagramUrl || "").trim();
+  const formTitle = String(publicProfile.formTitle || "").trim();
+  const formIntro = String(publicProfile.formIntro || "").trim();
+  const successPreviewText = String(publicProfile.successMessage || "").trim();
+  const galleryImages = Array.isArray(publicProfile.galleryImageUrls)
+    ? publicProfile.galleryImageUrls.filter(Boolean)
+    : [];
+  const galleryCount = galleryImages.length;
   const trustHighlights = useMemo(
     () =>
       [
@@ -111,7 +128,23 @@ export function StudioProfilePage({ slug = "", studioOverride = null, previewMod
     [galleryCount]
   );
   const requestSteps = useMemo(
-    () => [
+    () =>
+      studio?.bookingFlow?.enabled
+        ? [
+            {
+              title: "Berätta om din idé",
+              text: "Fyll i stil, placering, storlek och beskrivning så att studion får ett tydligt underlag direkt."
+            },
+            {
+              title: "Skicka in din förfrågan",
+              text: "Lägg gärna till en inspirationsbild om du vill visa stil, känsla eller referenser tydligare."
+            },
+            {
+              title: "Nästa steg blir tydligt",
+              text: "Du får rätt nästa steg utifrån studions upplägg, oavsett om det gäller bokning, återkoppling eller manuell genomgång."
+            }
+          ]
+        : [
       {
         title: "Berätta kort om din idé",
         text: "Beskriv motiv, stil, placering och gärna referenser eller inspiration."
@@ -121,7 +154,7 @@ export function StudioProfilePage({ slug = "", studioOverride = null, previewMod
         text: "Du får svar om nästa steg, prisbild, konsultation eller bokning beroende på upplägget."
       }
     ],
-    []
+    [studio?.bookingFlow?.enabled]
   );
   const pageTitle = useMemo(() => {
     if (studio?.name) {
@@ -207,12 +240,7 @@ export function StudioProfilePage({ slug = "", studioOverride = null, previewMod
           <div className="studio-hero__content">
             <p className="eyebrow eyebrow--light">{studio.city || "Tatueringsstudio"}</p>
             <h1>{studio.name}</h1>
-            <p className="lead">
-              {studio.publicProfile?.headline ||
-                studio.publicProfile?.intro ||
-                studio.description ||
-                "Skicka din förfrågan direkt till studion."}
-            </p>
+            {heroLeadText ? <p className="lead">{heroLeadText}</p> : null}
 
             {previewMode ? <p className="preview-banner">{previewMessage}</p> : null}
 
@@ -243,27 +271,29 @@ export function StudioProfilePage({ slug = "", studioOverride = null, previewMod
                 <strong>Plats</strong>
                 <span>{studio.city || "-"}</span>
               </div>
-              <div>
-                <strong>Område</strong>
-                <span>{studio.publicProfile?.serviceArea || studio.city || "-"}</span>
-              </div>
+              {serviceArea ? (
+                <div>
+                  <strong>Område</strong>
+                  <span>{serviceArea}</span>
+                </div>
+              ) : null}
             </div>
 
             <div className="studio-hero__actions">
-              {studio.publicProfile?.websiteUrl ? (
+              {websiteUrl ? (
                 <a
                   className="btn btn-secondary"
-                  href={studio.publicProfile.websiteUrl}
+                  href={websiteUrl}
                   target="_blank"
                   rel="noreferrer"
                 >
                   Besök hemsida
                 </a>
               ) : null}
-              {studio.publicProfile?.instagramUrl ? (
+              {instagramUrl ? (
                 <a
                   className="btn btn-secondary"
-                  href={studio.publicProfile.instagramUrl}
+                  href={instagramUrl}
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -278,15 +308,13 @@ export function StudioProfilePage({ slug = "", studioOverride = null, previewMod
       <section className="section section--white">
         <div className="container studio-layout">
           <div className="studio-layout__main">
-            <div className="info-panel">
-              <p className="eyebrow">Om Studion</p>
-              <h2>Om studion</h2>
-              <p className="body">
-                {studio.publicProfile?.intro ||
-                  studio.description ||
-                  "Studion har ännu inte lagt till en längre presentation."}
-              </p>
-            </div>
+            {aboutText ? (
+              <div className="info-panel">
+                <p className="eyebrow">Om Studion</p>
+                <h2>Om studion</h2>
+                <p className="body">{aboutText}</p>
+              </div>
+            ) : null}
 
             <div className="info-panel">
               <p className="eyebrow">Så Går Det Till</p>
@@ -317,6 +345,24 @@ export function StudioProfilePage({ slug = "", studioOverride = null, previewMod
           </div>
 
           <div className="studio-layout__aside">
+            {previewMode && (heroLeadText || cardSummary || serviceArea || studioTags.length) ? (
+              <div className="info-panel">
+                <p className="eyebrow">Katalogkort</p>
+                <h2>Så syns ni i katalogen</h2>
+                {heroLeadText ? <p className="body"><strong>{heroLeadText}</strong></p> : null}
+                {cardSummary ? <p className="body">{cardSummary}</p> : null}
+                {serviceArea ? <p className="body">Område: {serviceArea}</p> : null}
+                {studioTags.length ? (
+                  <div className="badge-row">
+                    {studioTags.map((tag) => (
+                      <span key={tag} className="badge">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
             <div className="info-panel trust-panel">
               <p className="eyebrow">Bra Att Veta</p>
               <h2>Innan du skickar</h2>
@@ -330,36 +376,37 @@ export function StudioProfilePage({ slug = "", studioOverride = null, previewMod
                 ))}
               </div>
             </div>
-            <StudioLeadForm studio={studio} introText={studio.publicProfile?.formIntro || ""} />
+            <StudioLeadFormEnhanced
+              studio={studio}
+              titleText={formTitle}
+              introText={formIntro}
+              successPreviewText={successPreviewText}
+              previewMode={previewMode}
+            />
           </div>
         </div>
       </section>
 
-      <section className="section section--lavender">
-        <div className="container">
-          <div className="section-heading section-heading--tight">
-            <div>
-              <p className="eyebrow">Galleri</p>
-              <h2>Utvalda bilder från studion</h2>
+      {galleryImages.length ? (
+        <section className="section section--lavender">
+          <div className="container">
+            <div className="section-heading section-heading--tight">
+              <div>
+                <p className="eyebrow">Galleri</p>
+                <h2>Utvalda bilder från studion</h2>
+              </div>
             </div>
-          </div>
 
-          {studio.publicProfile?.galleryImageUrls?.length ? (
             <div className="gallery-grid">
-              {studio.publicProfile.galleryImageUrls.map((imageUrl) => (
+              {galleryImages.map((imageUrl) => (
                 <a key={imageUrl} href={imageUrl} target="_blank" rel="noreferrer">
                   <img src={imageUrl} alt={`${studio.name} galleri`} />
                 </a>
               ))}
             </div>
-          ) : (
-            <div className="empty-panel">
-              <h3>Galleri kommer snart</h3>
-              <p>Studion har ännu inte lagt upp några galleribilder på sin publika sida.</p>
-            </div>
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

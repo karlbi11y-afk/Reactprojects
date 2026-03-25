@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { FormLegalLinks } from "./FormLegalLinks";
 import { createStrategyCall } from "../services/publicSiteApi";
+import { useLegalConsent } from "../contexts/LegalConsentContext";
+import { useAbandonedFormDraft } from "../hooks/useAbandonedFormDraft";
 import { getTrackingPayload } from "../utils/tracking";
 
 const initialForm = {
@@ -8,14 +11,47 @@ const initialForm = {
   email: "",
   phone: "",
   message: "",
-  privacyConsent: false,
-  marketingConsent: false,
   website: ""
 };
+
+function computeError(name, formData, touchedState) {
+  if (!touchedState[name]) return "";
+  switch (name) {
+    case "name":
+      return formData.name.trim().length < 2 ? "Fyll i ditt namn." : "";
+    case "studio":
+      return formData.studio.trim().length < 2 ? "Fyll i studions namn." : "";
+    case "email":
+      return !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())
+        ? "Ange en giltig e-postadress."
+        : "";
+    default:
+      return "";
+  }
+}
 
 export function StrategyCallForm() {
   const [formData, setFormData] = useState(initialForm);
   const [status, setStatus] = useState({ state: "idle", message: "" });
+  const [touched, setTouched] = useState({});
+  const { hasAcceptedConsent, openLegalModal } = useLegalConsent();
+  const draftPayload = useMemo(
+    () => ({
+      name: formData.name,
+      studio: formData.studio,
+      email: formData.email,
+      phone: formData.phone,
+      message: formData.message,
+      privacyConsent: hasAcceptedConsent,
+      marketingConsent: false,
+      website: formData.website
+    }),
+    [formData, hasAcceptedConsent]
+  );
+  const { draftId, clearDraft } = useAbandonedFormDraft({
+    type: "strategy_call",
+    payload: draftPayload
+  });
 
   function handleChange(event) {
     const { name, type, value, checked } = event.target;
@@ -25,13 +61,50 @@ export function StrategyCallForm() {
     }));
   }
 
+  function handleBlur(event) {
+    const { name } = event.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+  }
+
+  function getFieldError(name) {
+    return computeError(name, formData, touched);
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
+
+    if (!hasAcceptedConsent) {
+      setStatus({
+        state: "error",
+        message: "Godkänn integritetspolicy och villkor för att fortsätta."
+      });
+      openLegalModal();
+      return;
+    }
+
+    const allTouched = { name: true, studio: true, email: true };
+    setTouched(allTouched);
+
+    if (
+      computeError("name", formData, allTouched) ||
+      computeError("studio", formData, allTouched) ||
+      computeError("email", formData, allTouched)
+    ) {
+      setStatus({
+        state: "error",
+        message: "Kontrollera fälten markerade i rött och försök igen."
+      });
+      return;
+    }
+
     setStatus({ state: "loading", message: "Skickar bokningsförfrågan..." });
 
     try {
       const response = await createStrategyCall({
         ...formData,
+        privacyConsent: true,
+        marketingConsent: false,
+        draftId,
         ...getTrackingPayload()
       });
 
@@ -42,8 +115,8 @@ export function StrategyCallForm() {
           "Tack! Vi har tagit emot din förfrågan och återkommer normalt inom 24 timmar på vardagar."
       });
       setFormData(initialForm);
-      return;
-
+      setTouched({});
+      clearDraft();
     } catch (error) {
       setStatus({
         state: "error",
@@ -51,7 +124,6 @@ export function StrategyCallForm() {
           error.message ||
           "Det gick inte att skicka just nu. Kontrollera dina uppgifter och försök igen lite senare."
       });
-      return;
     }
   }
 
@@ -62,7 +134,7 @@ export function StrategyCallForm() {
         relevant.
       </p>
 
-      <label htmlFor="strategy-name">
+      <label htmlFor="strategy-name" className={getFieldError("name") ? "has-error" : ""}>
         Namn
         <input
           id="strategy-name"
@@ -71,11 +143,16 @@ export function StrategyCallForm() {
           placeholder="Ditt namn"
           value={formData.name}
           onChange={handleChange}
+          onBlur={handleBlur}
           required
+          aria-invalid={!!getFieldError("name")}
         />
+        {getFieldError("name") ? (
+          <span className="field-error" role="alert">{getFieldError("name")}</span>
+        ) : null}
       </label>
 
-      <label htmlFor="strategy-studio">
+      <label htmlFor="strategy-studio" className={getFieldError("studio") ? "has-error" : ""}>
         Studio
         <input
           id="strategy-studio"
@@ -84,11 +161,16 @@ export function StrategyCallForm() {
           placeholder="Studions namn"
           value={formData.studio}
           onChange={handleChange}
+          onBlur={handleBlur}
           required
+          aria-invalid={!!getFieldError("studio")}
         />
+        {getFieldError("studio") ? (
+          <span className="field-error" role="alert">{getFieldError("studio")}</span>
+        ) : null}
       </label>
 
-      <label htmlFor="strategy-email">
+      <label htmlFor="strategy-email" className={getFieldError("email") ? "has-error" : ""}>
         E-post
         <input
           id="strategy-email"
@@ -97,8 +179,13 @@ export function StrategyCallForm() {
           placeholder="namn@studio.se"
           value={formData.email}
           onChange={handleChange}
+          onBlur={handleBlur}
           required
+          aria-invalid={!!getFieldError("email")}
         />
+        {getFieldError("email") ? (
+          <span className="field-error" role="alert">{getFieldError("email")}</span>
+        ) : null}
       </label>
 
       <label htmlFor="strategy-phone">
@@ -140,31 +227,7 @@ export function StrategyCallForm() {
         </label>
       </div>
 
-      <label className="consent-row" htmlFor="strategy-privacyConsent">
-        <input
-          id="strategy-privacyConsent"
-          type="checkbox"
-          name="privacyConsent"
-          checked={formData.privacyConsent}
-          onChange={handleChange}
-          required
-        />
-        <span>
-          Jag godkänner att Ink Revenue sparar mina uppgifter för att kunna kontakta mig om
-          strategisamtal och offert.
-        </span>
-      </label>
-
-      <label className="consent-row" htmlFor="strategy-marketingConsent">
-        <input
-          id="strategy-marketingConsent"
-          type="checkbox"
-          name="marketingConsent"
-          checked={formData.marketingConsent}
-          onChange={handleChange}
-        />
-        <span>Jag vill även kunna få uppföljning och relevant information via mejl.</span>
-      </label>
+      <FormLegalLinks />
 
       <button className="btn btn-primary" type="submit" disabled={status.state === "loading"}>
         {status.state === "loading" ? "Skickar..." : "Skicka bokningsförfrågan"}

@@ -27,6 +27,28 @@ export function getPublicStudioBySlug(slug) {
   return request(`/api/public/studios/${encodeURIComponent(slug)}`);
 }
 
+export function getPublicStudioAvailability(slug, options = {}) {
+  const params = new URLSearchParams();
+
+  Object.entries(options).forEach(([key, value]) => {
+    const normalizedValue = String(value ?? "").trim();
+
+    if (normalizedValue) {
+      params.set(key, normalizedValue);
+    }
+  });
+
+  const suffix = params.size ? `?${params.toString()}` : "";
+  return request(`/api/public/studios/${encodeURIComponent(slug)}/availability${suffix}`);
+}
+
+export function previewPublicStudioBooking(slug, payload) {
+  return request(`/api/public/studios/${encodeURIComponent(slug)}/booking-preview`, {
+    method: "POST",
+    body: JSON.stringify(payload || {})
+  });
+}
+
 export function createPublicStudioLead(slug, payload) {
   return request(`/api/public/studios/${encodeURIComponent(slug)}/leads`, {
     method: "POST",
@@ -34,9 +56,23 @@ export function createPublicStudioLead(slug, payload) {
   });
 }
 
+export function savePublicStudioLeadDraft(slug, payload) {
+  return request(`/api/public/studios/${encodeURIComponent(slug)}/lead-drafts`, {
+    method: "POST",
+    body: JSON.stringify(payload || {})
+  });
+}
+
 export function createStrategyCall(payload) {
   return request("/api/booking", {
     method: "POST",
     body: JSON.stringify(payload)
+  });
+}
+
+export function saveStrategyCallDraft(payload) {
+  return request("/api/public/sales-lead-drafts", {
+    method: "POST",
+    body: JSON.stringify(payload || {})
   });
 }

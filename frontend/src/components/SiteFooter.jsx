@@ -1,6 +1,6 @@
 import { SiteLink } from "../utils/siteRouter";
 
-export function SiteFooter() {
+export function SiteFooter({ onOpenLegalModal }) {
   return (
     <footer className="footer">
       <div className="container footer__content">
@@ -17,6 +17,9 @@ export function SiteFooter() {
           <SiteLink href="/">Hem</SiteLink>
           <SiteLink href="/studios">Studios</SiteLink>
           <SiteLink href="/#bokning">Boka strategisamtal</SiteLink>
+          <button className="footer__link-button" type="button" onClick={onOpenLegalModal}>
+            Integritet & villkor
+          </button>
         </div>
 
         <div className="footer__contact">

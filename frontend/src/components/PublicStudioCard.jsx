@@ -11,6 +11,7 @@ function getStudioTags(studio) {
 
 export function PublicStudioCard({ studio, compact = false }) {
   const tags = [...new Set(getStudioTags(studio))].slice(0, compact ? 3 : 5);
+  const studioHref = `/studio/${studio.slug}`;
   const summary =
     studio.publicProfile?.cardSummary ||
     studio.publicProfile?.headline ||
@@ -18,7 +19,11 @@ export function PublicStudioCard({ studio, compact = false }) {
     "Utforska studions stil, bilder och kontaktvägar här.";
 
   return (
-    <article className={`studio-card ${compact ? "studio-card--compact" : ""}`}>
+    <SiteLink
+      className={`studio-card ${compact ? "studio-card--compact" : ""}`}
+      href={studioHref}
+      aria-label={`Se studio ${studio.name}`}
+    >
       <div
         className="studio-card__media"
         style={
@@ -53,10 +58,10 @@ export function PublicStudioCard({ studio, compact = false }) {
           </div>
         ) : null}
 
-        <SiteLink className="btn btn-primary studio-card__cta" href={`/studio/${studio.slug}`}>
+        <span className="btn btn-primary studio-card__cta">
           Se studio
-        </SiteLink>
+        </span>
       </div>
-    </article>
+    </SiteLink>
   );
 }
