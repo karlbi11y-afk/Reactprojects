@@ -28,7 +28,7 @@ export function SiteFooter({ onOpenLegalModal }) {
             Telefon: <a href="tel:+46732009483">+46732009483</a>
           </p>
           <p>
-            Mejl: <a href="mailto:info@inkrevenue.se">info@inkrevenue.se</a>
+            Mejl: <a href="mailto:info@inkrevenue.online">info@inkrevenue.online</a>
           </p>
         </div>
 

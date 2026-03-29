@@ -927,7 +927,7 @@ export function StudioLeadFormEnhanced({
                 id="lead-email"
                 type="email"
                 name="email"
-                placeholder="namn@mail.se"
+                placeholder="namn@mail.online"
                 value={formData.email}
                 onChange={handleChange}
                 onBlur={handleBlur}

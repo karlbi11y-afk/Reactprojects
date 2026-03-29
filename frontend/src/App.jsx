@@ -389,7 +389,7 @@ export default function App() {
                 id="email"
                 type="email"
                 name="email"
-                placeholder="namn@studio.se"
+                placeholder="namn@studio.online"
                 value={formData.email}
                 onChange={handleChange}
                 required
@@ -470,7 +470,7 @@ export default function App() {
             <div className="brand-mark brand-mark--footer">Ink Revenue</div>
           </div>
           <p>Kontakta oss på: +46732009483</p>
-          <p>Mejl: info@inkrevenue.se</p>
+          <p>Mejl: info@inkrevenue.online</p>
           <div className="socials">
             <a
               className="social"

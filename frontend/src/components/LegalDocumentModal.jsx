@@ -6,7 +6,7 @@ const DOCUMENT_CONTENT = {
       "När du fyller i namn, mejl, telefon eller bokningsdetaljer får vi spara uppgifterna för att hantera din förfrågan och hjälpa dig vidare till rätt studio eller strategisamtal.",
       "Om du börjar fylla i ett formulär men inte skickar in det kan vi spara utkastet och skicka påminnelser via mejl eller sms under veckan, så att du enkelt kan fortsätta där du slutade.",
       "Vi använder också teknisk information som sida, referenslänk och kampanjdata för att förstå var förfrågningar kommer ifrån och förbättra tjänsten.",
-      "Om du vill att uppgifter ska rättas eller tas bort kan du kontakta oss på info@inkrevenue.se."
+      "Om du vill att uppgifter ska rättas eller tas bort kan du kontakta oss på info@inkrevenue.online."
     ]
   },
   terms: {

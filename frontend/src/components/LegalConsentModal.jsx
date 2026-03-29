@@ -1,9 +1,73 @@
+import { useEffect, useRef } from "react";
+
+const FOCUSABLE = [
+  'button:not([disabled])',
+  'a[href]',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])'
+].join(", ");
+
 export function LegalConsentModal({
   hasAcceptedConsent,
   isOpen,
   onAccept,
   onClose
 }) {
+  const dialogRef = useRef(null);
+  const previousFocusRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    previousFocusRef.current = document.activeElement;
+
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    const focusable = Array.from(dialog.querySelectorAll(FOCUSABLE));
+    if (focusable.length > 0) {
+      focusable[0].focus();
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape" && hasAcceptedConsent && onClose) {
+        onClose();
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+
+      const elements = Array.from(dialog.querySelectorAll(FOCUSABLE));
+      if (elements.length === 0) return;
+
+      const first = elements[0];
+      const last = elements[elements.length - 1];
+
+      if (event.shiftKey) {
+        if (document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      if (previousFocusRef.current) {
+        previousFocusRef.current.focus();
+      }
+    };
+  }, [isOpen, hasAcceptedConsent, onClose]);
+
   if (!isOpen) {
     return null;
   }
@@ -12,6 +76,7 @@ export function LegalConsentModal({
     <div className="legal-modal" role="presentation">
       <div className="legal-modal__backdrop" />
       <section
+        ref={dialogRef}
         className="legal-modal__dialog"
         role="dialog"
         aria-modal="true"
@@ -73,7 +138,7 @@ export function LegalConsentModal({
             </p>
             <p>
               Om du vill att uppgifter ska tas bort eller rättas kan du kontakta oss på
-              info@inkrevenue.se.
+              info@inkrevenue.online.
             </p>
           </article>
         </div>

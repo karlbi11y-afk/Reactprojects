@@ -176,7 +176,7 @@ export function StrategyCallForm() {
           id="strategy-email"
           type="email"
           name="email"
-          placeholder="namn@studio.se"
+          placeholder="namn@studio.online"
           value={formData.email}
           onChange={handleChange}
           onBlur={handleBlur}

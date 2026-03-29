@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "ink-revenue-backend",
   "version": "0.0.0",
   "private": true,
@@ -9,6 +9,8 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "helmet": "^8.1.0",
+    "zod": "^4.3.6"
   }
 }

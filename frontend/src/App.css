@@ -973,6 +973,17 @@ h1 {
   margin-bottom: 20px;
 }
 
+.error-boundary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px 24px;
+  text-align: center;
+  gap: 16px;
+}
+
 .empty-panel h2,
 .empty-panel h3,
 .loading-state h2 {
