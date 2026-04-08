@@ -1,13 +1,5 @@
 import { SiteLink } from "../utils/siteRouter";
-
-function getStudioTags(studio) {
-  return [
-    ...(Array.isArray(studio.styles) ? studio.styles : []),
-    ...(Array.isArray(studio.publicProfile?.artworkTags)
-      ? studio.publicProfile.artworkTags
-      : [])
-  ].filter(Boolean);
-}
+import { getStudioTags } from "../utils/studioTags";
 
 export function PublicStudioCard({ studio, compact = false }) {
   const tags = [...new Set(getStudioTags(studio))].slice(0, compact ? 3 : 5);

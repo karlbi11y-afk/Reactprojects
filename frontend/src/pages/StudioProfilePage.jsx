@@ -3,15 +3,7 @@ import { buildPageTitle, usePageMetadata } from "../utils/pageMetadata";
 import { SiteLink } from "../utils/siteRouter";
 import { getPublicStudioBySlug } from "../services/publicSiteApi";
 import { StudioLeadFormEnhanced } from "../components/StudioLeadFormEnhanced";
-
-function getStudioTags(studio) {
-  return [
-    ...(Array.isArray(studio.styles) ? studio.styles : []),
-    ...(Array.isArray(studio.publicProfile?.artworkTags)
-      ? studio.publicProfile.artworkTags
-      : [])
-  ].filter(Boolean);
-}
+import { getStudioTags } from "../utils/studioTags";
 
 function truncateText(value, maxLength = 160) {
   const text = String(value || "")

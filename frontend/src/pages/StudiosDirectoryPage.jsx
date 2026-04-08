@@ -2,15 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { PublicStudioCard } from "../components/PublicStudioCard";
 import { getPublicStudios } from "../services/publicSiteApi";
 import { buildPageTitle, usePageMetadata } from "../utils/pageMetadata";
-
-function getStudioTags(studio) {
-  return [
-    ...(Array.isArray(studio.styles) ? studio.styles : []),
-    ...(Array.isArray(studio.publicProfile?.artworkTags)
-      ? studio.publicProfile.artworkTags
-      : [])
-  ].filter(Boolean);
-}
+import { getStudioTags } from "../utils/studioTags";
 
 export function StudiosDirectoryPage() {
   const [studios, setStudios] = useState([]);
