@@ -347,6 +347,137 @@ export default function App() {
         </div>
       </section>
 
+      <section className="section section--white" id="priser">
+        <div className="container">
+          <div className="pricing-header">
+            <p className="eyebrow">Priser</p>
+            <h2>Ni betalar bara när vi levererar</h2>
+            <p className="pricing-header__lead">
+              Fast månadsavgift + 400 kr per kund vi tillför er —
+              men levererar vi inga kunder den månaden är hela månaden
+              helt gratis. Ingen fast avgift, ingenting alls.
+            </p>
+          </div>
+
+          <div className="pricing-grid">
+            {/* Bokning */}
+            <div className="pricing-card">
+              <div className="pricing-card__top">
+                <span className="pricing-badge">Bokningar</span>
+                <h3 className="pricing-card__name">Bokning</h3>
+                <p className="pricing-card__desc">
+                  Bokningssystem via InkRevenue med unik bokningslänk och kalenderhantering i CRM.
+                </p>
+              </div>
+              <div className="pricing-card__price">
+                <span className="pricing-amount">6 000 kr</span>
+                <span className="pricing-period">/mån</span>
+              </div>
+              <p className="pricing-per-customer">+ 400 kr per tillförd kund</p>
+              <ul className="pricing-features">
+                <li>Bokningssystem via InkRevenue</li>
+                <li>Unik bokningslänk per studio</li>
+                <li>Automatisk bokningsbekräftelse</li>
+                <li>Kalenderhantering i CRM</li>
+                <li>Grundläggande kundhistorik</li>
+                <li className="pricing-features__highlight">Gratis hela månaden om vi inte levererar</li>
+              </ul>
+              <a className="btn btn-secondary" href="#bokning">Boka samtal</a>
+            </div>
+
+            {/* Marknadsföring */}
+            <div className="pricing-card">
+              <div className="pricing-card__top">
+                <span className="pricing-badge">Sociala medier</span>
+                <h3 className="pricing-card__name">Marknadsföring</h3>
+                <p className="pricing-card__desc">
+                  Vi skapar och publicerar organiska videos på er TikTok och Instagram varje månad.
+                </p>
+              </div>
+              <div className="pricing-card__price">
+                <span className="pricing-amount">6 000 kr</span>
+                <span className="pricing-period">/mån</span>
+              </div>
+              <p className="pricing-per-customer">+ 400 kr per tillförd kund</p>
+              <ul className="pricing-features">
+                <li>3–4 organiska videos per månad</li>
+                <li>Publicering på TikTok och Instagram</li>
+                <li>Hashtag- och innehållsstrategi</li>
+                <li>Månadsrapport — räckvidd, följare, bokningar</li>
+                <li className="pricing-features__highlight">Gratis hela månaden om vi inte levererar</li>
+              </ul>
+              <a className="btn btn-secondary" href="#bokning">Boka samtal</a>
+            </div>
+
+            {/* Kombipaketet — featured */}
+            <div className="pricing-card pricing-card--featured">
+              <div className="pricing-card__top">
+                <span className="pricing-badge pricing-badge--featured">Populärast</span>
+                <h3 className="pricing-card__name">Kombipaketet</h3>
+                <p className="pricing-card__desc">
+                  Allt i ett — bokningssystem, sociala medier och Meta Ads.
+                </p>
+              </div>
+              <div className="pricing-card__price">
+                <span className="pricing-amount">10 000 kr</span>
+                <span className="pricing-period">/mån</span>
+              </div>
+              <p className="pricing-per-customer">+ 400 kr per tillförd kund</p>
+              <ul className="pricing-features">
+                <li>Bokningssystem via InkRevenue</li>
+                <li>3–4 organiska videos/mån (TikTok + Instagram)</li>
+                <li>Meta Ads-hantering (ni betalar er ad-budget)</li>
+                <li>Fullständigt CRM med kundhantering</li>
+                <li>Analytics-dashboard</li>
+                <li>Prioriterad support</li>
+                <li className="pricing-features__highlight">Gratis hela månaden om vi inte levererar</li>
+              </ul>
+              <a className="btn btn-primary" href="#bokning">Boka samtal</a>
+            </div>
+
+            {/* Hemsidebygge */}
+            <div className="pricing-card pricing-card--addon">
+              <div className="pricing-card__top">
+                <span className="pricing-badge pricing-badge--addon">Engångs</span>
+                <h3 className="pricing-card__name">Hemsidebygge</h3>
+                <p className="pricing-card__desc">
+                  Vi bygger en professionell hemsida för er studio. Engångsbetalning.
+                </p>
+              </div>
+              <div className="pricing-card__price">
+                <span className="pricing-amount">4 000 kr</span>
+                <span className="pricing-period">engångs</span>
+              </div>
+              <ul className="pricing-features">
+                <li>Skräddarsydd hemsida för er studio</li>
+                <li>Mobilanpassad design</li>
+                <li>SEO-grundoptimering</li>
+                <li>Integrering med bokningslänk</li>
+                <li>Leverans inom 2–3 veckor</li>
+              </ul>
+              <a className="btn btn-secondary" href="#bokning">Boka samtal</a>
+            </div>
+          </div>
+
+          <div className="pricing-guarantee">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <path d="M9 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span>
+              <strong>Vår garanti:</strong> Levererar vi inga kunder den månaden
+              betalar ni ingenting — varken fast avgift eller kundavgift. Fakturan
+              den 2:a varje månad är 0 kr om vi inte levererat. Ingen bindningstid.
+            </span>
+          </div>
+
+          <p className="pricing-footer-note">
+            Alla priser exkl. moms. Ingen bindningstid — avsluta när ni vill. Har ni frågor?{" "}
+            <a href="#bokning">Boka ett kostnadsfritt strategisamtal.</a>
+          </p>
+        </div>
+      </section>
+
       <section className="section section--lavender" id="bokning">
         <div className="container booking">
           <div>

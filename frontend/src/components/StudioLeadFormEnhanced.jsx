@@ -6,7 +6,7 @@ import {
   previewPublicStudioBooking
 } from "../services/publicSiteApi";
 import { useAbandonedFormDraft } from "../hooks/useAbandonedFormDraft";
-import { getTrackingPayload } from "../utils/tracking";
+import { getLeadSourceFromUrl, getTrackingPayload } from "../utils/tracking";
 import { prepareLeadImageUpload } from "../utils/prepareLeadImageUpload";
 
 const WEEKDAY_LABELS = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
@@ -501,6 +501,7 @@ export function StudioLeadFormEnhanced({
         privacyConsent: true,
         marketingConsent: false,
         draftId,
+        source: getLeadSourceFromUrl(),
         inspirationImage: inspirationImage
           ? {
               fileName: inspirationImage.fileName,

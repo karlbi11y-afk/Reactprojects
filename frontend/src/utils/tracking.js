@@ -1,5 +1,26 @@
 const SESSION_STORAGE_KEY = "inkrevenue-session-id";
 
+// Maps utm_source values from URLs to our internal billing source keys.
+// "inkrevenue"   → direct booking link (e.g. studio bio, QR code we produced)
+// "social_media" → post/DM we managed on their social accounts
+// anything else  → leave empty, backend will default to inkrevenue_studio_page (non-billable)
+const UTM_SOURCE_TO_LEAD_SOURCE = {
+  inkrevenue: "inkrevenue",
+  social_media: "social_media",
+  instagram: "social_media",
+  facebook: "social_media",
+  tiktok: "social_media"
+};
+
+export function getLeadSourceFromUrl() {
+  if (typeof window === "undefined") return "";
+  const utmSource = new URL(window.location.href).searchParams
+    .get("utm_source")
+    ?.toLowerCase()
+    ?.trim() || "";
+  return UTM_SOURCE_TO_LEAD_SOURCE[utmSource] || "";
+}
+
 function createFallbackSessionId() {
   return `session-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
