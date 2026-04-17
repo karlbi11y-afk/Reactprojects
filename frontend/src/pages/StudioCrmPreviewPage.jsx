@@ -5,18 +5,6 @@ import { StudioProfilePage } from "./StudioProfilePage";
 const READY_MESSAGE_TYPE = "inkrevenue-crm-preview:ready";
 const UPDATE_MESSAGE_TYPE = "inkrevenue-crm-preview:update";
 
-function getParentOrigin() {
-  if (typeof document === "undefined" || !document.referrer) {
-    return "";
-  }
-
-  try {
-    return new URL(document.referrer).origin;
-  } catch {
-    return "";
-  }
-}
-
 function getPreviewSlug() {
   if (typeof window === "undefined") {
     return "";
@@ -27,15 +15,10 @@ function getPreviewSlug() {
 
 export function StudioCrmPreviewPage() {
   const [studio, setStudio] = useState(null);
-  const parentOrigin = useMemo(() => getParentOrigin(), []);
   const previewSlug = useMemo(() => getPreviewSlug(), []);
 
   useEffect(() => {
     function handleMessage(event) {
-      if (parentOrigin && event.origin !== parentOrigin) {
-        return;
-      }
-
       if (event.data?.type !== UPDATE_MESSAGE_TYPE) {
         return;
       }
@@ -47,7 +30,7 @@ export function StudioCrmPreviewPage() {
 
     if (window.parent && window.parent !== window) {
       function sendReady() {
-        window.parent.postMessage({ type: READY_MESSAGE_TYPE }, parentOrigin || "*");
+        window.parent.postMessage({ type: READY_MESSAGE_TYPE }, "*");
       }
 
       // Send immediately, then retry a few times to handle race conditions
