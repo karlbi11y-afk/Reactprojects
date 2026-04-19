@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+Disallow: /studio-crm-preview
+Disallow: /studio-preview/
+
+Sitemap: https://inkrevenue.online/sitemap.xml

@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Ink Revenue social preview">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a1628"/>
+      <stop offset="100%" stop-color="#111e38"/>
+    </linearGradient>
+    <radialGradient id="glow1" cx="15%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#2e6fa3" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#2e6fa3" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="90%" cy="30%" r="45%">
+      <stop offset="0%" stop-color="#1a4a7a" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#1a4a7a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="silver" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#858489"/>
+      <stop offset="25%"  stop-color="#e7e4ef"/>
+      <stop offset="50%"  stop-color="#858489"/>
+      <stop offset="75%"  stop-color="#c8c8c8"/>
+      <stop offset="100%" stop-color="#858489"/>
+    </linearGradient>
+    <linearGradient id="silverText" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#a0a0a8"/>
+      <stop offset="40%"  stop-color="#e7e4ef"/>
+      <stop offset="100%" stop-color="#9090a0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow1)"/>
+  <rect width="1200" height="630" fill="url(#glow2)"/>
+
+  <!-- Subtle grid lines -->
+  <line x1="0" y1="210" x2="1200" y2="210" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+  <line x1="0" y1="420" x2="1200" y2="420" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+  <line x1="400" y1="0" x2="400" y2="630" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+  <line x1="800" y1="0" x2="800" y2="630" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+
+  <!-- Diamond logo (right side) -->
+  <g transform="translate(980 315) rotate(45)">
+    <rect x="-110" y="-110" width="220" height="220" fill="none" stroke="#2e6fa3" stroke-width="10" opacity="0.6"/>
+  </g>
+  <g transform="translate(980 315) rotate(45)">
+    <rect x="-88" y="-88" width="176" height="176" fill="none" stroke="#2e6fa3" stroke-width="3" opacity="0.2"/>
+  </g>
+  <text x="980" y="304" text-anchor="middle" font-family="Space Grotesk, Segoe UI, sans-serif" font-size="64" font-weight="700" fill="url(#silver)">INK</text>
+  <text x="980" y="352" text-anchor="middle" font-family="Space Grotesk, Segoe UI, sans-serif" font-size="36" font-weight="600" fill="url(#silver)">Revenue</text>
+
+  <!-- Left content -->
+  <!-- Brand label -->
+  <rect x="72" y="80" width="8" height="8" fill="#2e6fa3" transform="rotate(45 76 84)"/>
+  <text x="94" y="91" fill="#2e6fa3" font-family="Space Grotesk, Segoe UI, sans-serif" font-size="18" font-weight="700" letter-spacing="4">INK REVENUE</text>
+
+  <!-- Headline -->
+  <text x="72" y="210" fill="#f0eef8" font-family="Georgia, serif" font-size="72" font-weight="700">Fler kunder till</text>
+  <text x="72" y="296" fill="#f0eef8" font-family="Georgia, serif" font-size="72" font-weight="700">din tatueringsstudio.</text>
+
+  <!-- Subline -->
+  <text x="72" y="368" fill="#8899bb" font-family="Space Grotesk, Segoe UI, sans-serif" font-size="28">Betala bara när vi levererar resultat.</text>
+  <text x="72" y="404" fill="#8899bb" font-family="Space Grotesk, Segoe UI, sans-serif" font-size="28">Inga dolda avgifter — garanterade bokningar.</text>
+
+  <!-- CTA pill -->
+  <rect x="72" y="452" width="290" height="52" rx="26" fill="none" stroke="#2e6fa3" stroke-width="2"/>
+  <text x="217" y="484" text-anchor="middle" fill="#c8d8f0" font-family="Space Grotesk, Segoe UI, sans-serif" font-size="22" font-weight="600">inkrevenue.online</text>
+
+  <!-- Bottom divider -->
+  <line x1="72" y1="540" x2="820" y2="540" stroke="rgba(46,111,163,0.25)" stroke-width="1"/>
+  <text x="72" y="566" fill="#4a6080" font-family="Space Grotesk, Segoe UI, sans-serif" font-size="18">Marknadsföring · Tatueringsstudior · Sverige</text>
+</svg>

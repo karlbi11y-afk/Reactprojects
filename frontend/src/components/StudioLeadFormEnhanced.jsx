@@ -291,7 +291,11 @@ function PaymentStep({ amountSek, paymentIntentId, onConfirmed, onCancel, submit
     }
 
     if (paymentIntent?.status === "succeeded") {
-      await onConfirmed(paymentIntent.id);
+      try {
+        await onConfirmed(paymentIntent.id);
+      } catch {
+        setPaying(false);
+      }
     } else {
       setPayError("Betalningen bekräftades inte. Kontakta studion om beloppet dragits.");
       setPaying(false);
@@ -722,6 +726,9 @@ export function StudioLeadFormEnhanced({
         state: "error",
         message: error.message || "Betalningen gick igenom men bokningen kunde inte sparas. Kontakta studion."
       });
+      setPaymentReady(false);
+      setPaymentIntentClientSecret(null);
+      setPaymentIntentId(null);
     }
   }, [formData, draftId, inspirationImage, studio]);
 

@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 
 const BRAND_NAME = "Ink Revenue";
-const DEFAULT_IMAGE_PATH = "/ink-revenue-logo.svg";
+const SITE_URL = "https://inkrevenue.online";
+const DEFAULT_IMAGE_PATH = "/og-image.png";
 
 function toAbsoluteUrl(value) {
   if (!value) {
@@ -89,14 +90,17 @@ export function usePageMetadata({
     document.title = resolvedTitle;
 
     upsertMeta("name", "description", resolvedDescription);
-    upsertMeta("name", "robots", noIndex ? "noindex, nofollow" : "index, follow");
+    upsertMeta("name", "robots", noIndex ? "noindex, nofollow" : "index, follow, max-image-preview:large, max-snippet:-1");
+    upsertMeta("property", "og:locale", "sv_SE");
     upsertMeta("property", "og:site_name", BRAND_NAME);
     upsertMeta("property", "og:type", type);
     upsertMeta("property", "og:title", resolvedTitle);
     upsertMeta("property", "og:description", resolvedDescription);
     upsertMeta("property", "og:url", canonicalUrl);
     upsertMeta("property", "og:image", imageUrl);
-    upsertMeta("name", "twitter:card", imageUrl ? "summary_large_image" : "summary");
+    upsertMeta("property", "og:image:width", "1200");
+    upsertMeta("property", "og:image:height", "630");
+    upsertMeta("name", "twitter:card", "summary_large_image");
     upsertMeta("name", "twitter:title", resolvedTitle);
     upsertMeta("name", "twitter:description", resolvedDescription);
     upsertMeta("name", "twitter:image", imageUrl);

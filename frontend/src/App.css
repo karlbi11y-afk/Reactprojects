@@ -17,6 +17,12 @@
   --silver-2: #c2c9d3;
   --silver-3: #ffffff;
   --silver-4: #9aa3ad;
+  --success: #22c55e;
+  --success-bg: rgba(34, 197, 94, 0.08);
+  --success-text: #1c7d4d;
+  --danger: #c2410c;
+  --danger-text: #b91c1c;
+  --accent: #215fb0;
 }
 
 * {
@@ -29,7 +35,7 @@ html {
 
 body {
   margin: 0;
-  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+  font-family: "Epilogue", "Segoe UI", sans-serif;
   color: var(--text);
   background: var(--lav-50);
   line-height: 1.6;
@@ -112,27 +118,12 @@ svg {
 }
 
 .brand-mark {
-  font-family: "Fraunces", "Georgia", serif;
+  font-family: "Big Shoulders Display", "Georgia", sans-serif;
   font-size: clamp(34px, 4vw, 56px);
   letter-spacing: 0.06em;
   margin-bottom: 22px;
-  color: transparent;
-  background-image:
-    linear-gradient(
-      90deg,
-      #858489 0%,
-      #e7e4ef 25%,
-      #858489 50%,
-      #b9b9b9 75%,
-      #858489 100%
-    );
-  background-size: 120% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.45),
-    0 8px 18px rgba(13, 32, 59, 0.4);
+  color: rgba(235, 232, 242, 0.92);
+  text-shadow: 0 8px 24px rgba(13, 32, 59, 0.45);
 }
 
 .brand-lockup {
@@ -205,8 +196,6 @@ h1 {
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.12);
   box-shadow: 0 18px 34px rgba(7, 18, 34, 0.16);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
 }
 
 .audience-card--customer {
@@ -231,7 +220,7 @@ h1 {
 
 .audience-card h3 {
   margin: 0 0 12px;
-  font-family: "Fraunces", "Georgia", serif;
+  font-family: "Big Shoulders Display", "Georgia", sans-serif;
   font-size: 1.5rem;
 }
 
@@ -326,7 +315,7 @@ h1 {
 }
 
 .section h2 {
-  font-family: "Fraunces", "Georgia", serif;
+  font-family: "Big Shoulders Display", "Georgia", sans-serif;
   font-size: clamp(28px, 3vw, 38px);
   margin-top: 0;
   margin-bottom: 18px;
@@ -430,7 +419,7 @@ h1 {
   top: 0;
   bottom: 0;
   width: calc(var(--value) * 1%);
-  background: linear-gradient(90deg, var(--ink-400), var(--ink-700));
+  background: var(--accent);
   border-radius: 999px;
 }
 
@@ -458,7 +447,6 @@ h1 {
 .section-title h2 {
   margin: 0;
   text-transform: uppercase;
-  font-family: "Space Grotesk", "Segoe UI", sans-serif;
   font-size: 1.4rem;
   letter-spacing: 0.08em;
 }
@@ -519,8 +507,8 @@ h1 {
   width: 54px;
   height: 54px;
   border-radius: 16px;
-  background: #e6efff;
-  color: #2f77d2;
+  background: var(--lav-100);
+  color: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -623,9 +611,9 @@ h1 {
   cursor: pointer;
 }
 
-.booking-form input:focus,
-.booking-form select:focus,
-.booking-form textarea:focus {
+.booking-form input:focus-visible,
+.booking-form select:focus-visible,
+.booking-form textarea:focus-visible {
   outline: 2px solid rgba(33, 95, 176, 0.35);
   border-color: rgba(33, 95, 176, 0.35);
   box-shadow: 0 0 0 4px rgba(33, 95, 176, 0.08);
@@ -684,7 +672,7 @@ h1 {
 .form-payment-step-error {
   margin: 0;
   font-size: 0.85rem;
-  color: #b91c1c;
+  color: var(--danger-text);
 }
 .form-payment-step-actions {
   display: flex;
@@ -704,11 +692,11 @@ h1 {
 .payment-confirmed__icon svg {
   width: 64px;
   height: 64px;
-  stroke: #22c55e;
+  stroke: var(--success);
 }
 .payment-confirmed__icon circle {
-  stroke: #22c55e;
-  fill: rgba(34, 197, 94, 0.08);
+  stroke: var(--success);
+  fill: var(--success-bg);
 }
 .payment-confirmed__title {
   font-family: "Bebas Neue", sans-serif;
@@ -720,7 +708,7 @@ h1 {
 .payment-confirmed__amount {
   font-size: 2.5rem;
   font-weight: 700;
-  color: #22c55e;
+  color: var(--success);
   margin: 0;
   line-height: 1;
 }
@@ -760,8 +748,8 @@ h1 {
   gap: 8px;
 }
 .week-picker__nav {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 1px solid rgba(18, 48, 88, 0.12);
   background: #fff;
@@ -887,15 +875,15 @@ h1 {
 }
 
 .form-status--success {
-  color: #1c7d4d;
+  color: var(--success-text);
 }
 
 .form-status--error {
-  color: #c2410c;
+  color: var(--danger);
 }
 
 .form-status--muted {
-  color: #52657f;
+  color: var(--muted);
 }
 
 .legal-note {
@@ -930,14 +918,14 @@ h1 {
 
 .form-progress-bar {
   height: 6px;
-  background: #e2e8f0;
+  background: var(--lav-100);
   border-radius: 99px;
   overflow: hidden;
 }
 
 .form-progress-fill {
   height: 100%;
-  background: #215fb0;
+  background: var(--accent);
   border-radius: 99px;
   transition: width 0.35s ease;
 }
@@ -968,12 +956,12 @@ h1 {
 }
 
 .field-required {
-  color: #c2410c;
+  color: var(--danger);
   font-size: 0.8em;
 }
 
 .field-error {
-  color: #c2410c;
+  color: var(--danger);
   font-size: 0.85rem;
   font-weight: 400;
 }
@@ -981,16 +969,16 @@ h1 {
 .booking-form label.has-error input,
 .booking-form label.has-error select,
 .booking-form label.has-error textarea {
-  border-color: #f87171;
-  background: #fff8f7;
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 4%, #fff);
 }
 
-.booking-form label.has-error input:focus,
-.booking-form label.has-error select:focus,
-.booking-form label.has-error textarea:focus {
-  outline-color: rgba(239, 68, 68, 0.4);
-  border-color: #f87171;
-  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.08);
+.booking-form label.has-error input:focus-visible,
+.booking-form label.has-error select:focus-visible,
+.booking-form label.has-error textarea:focus-visible {
+  outline-color: color-mix(in srgb, var(--danger) 40%, transparent);
+  border-color: var(--danger);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 8%, transparent);
 }
 
 .footer {
@@ -1227,9 +1215,10 @@ h1 {
 }
 
 .btn-secondary--hero:focus-visible {
-  outline: none;
+  outline: 2px solid rgba(231, 240, 255, 0.9);
+  outline-offset: 3px;
   box-shadow:
-    0 0 0 4px rgba(231, 240, 255, 0.18),
+    0 0 0 4px rgba(231, 240, 255, 0.25),
     0 24px 44px rgba(7, 18, 34, 0.3);
 }
 
@@ -1269,8 +1258,8 @@ h1 {
 }
 
 .error-panel {
-  color: #a0451d;
-  background: #fff5ee;
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 6%, #fff);
   margin-bottom: 20px;
 }
 
@@ -1358,7 +1347,7 @@ h1 {
 
 .studio-card__body h3 {
   margin: 0;
-  font-family: "Fraunces", "Georgia", serif;
+  font-family: "Big Shoulders Display", "Georgia", sans-serif;
   font-size: 1.55rem;
 }
 
@@ -1404,7 +1393,7 @@ h1 {
   align-items: center;
   padding: 8px 12px;
   border-radius: 999px;
-  background: #eef4ff;
+  background: var(--lav-100);
   color: var(--ink-700);
   border: 1px solid rgba(18, 48, 88, 0.08);
   font-size: 0.88rem;
@@ -2536,7 +2525,7 @@ h1 {
 
 .pricing-card__name {
   margin: 0;
-  font-family: "Fraunces", "Georgia", serif;
+  font-family: "Big Shoulders Display", "Georgia", sans-serif;
   font-size: 1.45rem;
 }
 
@@ -2695,5 +2684,8 @@ h1 {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+  .hero__orb {
+    animation: none !important;
   }
 }
