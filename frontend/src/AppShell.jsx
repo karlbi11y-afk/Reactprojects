@@ -7,6 +7,8 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 import { StudioCrmPreviewPage } from "./pages/StudioCrmPreviewPage";
 import { StudioProfilePage } from "./pages/StudioProfilePage";
 import { StudiosDirectoryPage } from "./pages/StudiosDirectoryPage";
+import { studioRegistry } from "./pages/studios";
+import { ThemedStudioPage } from "./pages/studios/ThemedStudioPage";
 import { useSiteLocation } from "./utils/siteRouter";
 
 function getPageFromPath(pathname) {
@@ -50,9 +52,13 @@ function getPageFromPath(pathname) {
   const studioMatch = pathname.match(/^\/studio\/([^/]+)$/);
 
   if (studioMatch) {
+    const slug = decodeURIComponent(studioMatch[1]);
+    const entry = studioRegistry[slug];
     return {
       currentPath: pathname,
-      element: <StudioProfilePage slug={decodeURIComponent(studioMatch[1])} />
+      element: entry
+        ? <ThemedStudioPage slug={slug} theme={entry.theme} />
+        : <StudioProfilePage slug={slug} />
     };
   }
 

@@ -3,6 +3,7 @@ import { PublicStudioCard } from "../components/PublicStudioCard";
 import { getPublicStudios } from "../services/publicSiteApi";
 import { buildPageTitle, usePageMetadata } from "../utils/pageMetadata";
 import { getStudioTags } from "../utils/studioTags";
+import { studioRegistry } from "./studios";
 
 export function StudiosDirectoryPage() {
   const [studios, setStudios] = useState([]);
@@ -172,7 +173,11 @@ export function StudiosDirectoryPage() {
               </div>
               <div className="studio-grid">
                 {filteredStudios.map((studio) => (
-                  <PublicStudioCard key={studio.id} studio={studio} />
+                  <PublicStudioCard
+                    key={studio.id}
+                    studio={studio}
+                    cardTheme={studioRegistry[studio.slug]?.cardTheme ?? null}
+                  />
                 ))}
               </div>
             </>

@@ -1,7 +1,7 @@
 import { SiteLink } from "../utils/siteRouter";
 import { getStudioTags } from "../utils/studioTags";
 
-export function PublicStudioCard({ studio, compact = false }) {
+export function PublicStudioCard({ studio, compact = false, cardTheme = null }) {
   const tags = [...new Set(getStudioTags(studio))].slice(0, compact ? 3 : 5);
   const studioHref = `/studio/${studio.slug}`;
   const summary =
@@ -10,22 +10,22 @@ export function PublicStudioCard({ studio, compact = false }) {
     studio.description ||
     "Utforska studions stil, bilder och kontaktvägar här.";
 
+  const mediaImageUrl = studio.heroImageUrl || studio.publicProfile?.galleryImageUrls?.[0] || null;
+  const mediaStyle = mediaImageUrl
+    ? {
+        backgroundImage: cardTheme?.gradient
+          ? `${cardTheme.gradient}, url(${mediaImageUrl})`
+          : `linear-gradient(rgba(10, 26, 47, 0.2), rgba(10, 26, 47, 0.6)), url(${mediaImageUrl})`
+      }
+    : undefined;
+
   return (
     <SiteLink
       className={`studio-card ${compact ? "studio-card--compact" : ""}`}
       href={studioHref}
       aria-label={`Se studio ${studio.name}`}
     >
-      <div
-        className="studio-card__media"
-        style={
-          studio.heroImageUrl
-            ? {
-                backgroundImage: `linear-gradient(rgba(10, 26, 47, 0.2), rgba(10, 26, 47, 0.6)), url(${studio.heroImageUrl})`
-              }
-            : undefined
-        }
-      >
+      <div className="studio-card__media" style={mediaStyle}>
         {studio.logoUrl ? (
           <img className="studio-card__logo" src={studio.logoUrl} alt={`${studio.name} logotyp`} />
         ) : null}
@@ -43,14 +43,29 @@ export function PublicStudioCard({ studio, compact = false }) {
         {tags.length ? (
           <div className="badge-row">
             {tags.map((tag) => (
-              <span key={tag} className="badge">
+              <span
+                key={tag}
+                className="badge"
+                style={
+                  cardTheme?.badgeBg
+                    ? { background: cardTheme.badgeBg, color: cardTheme.badgeText || "#fff", borderColor: cardTheme.badgeBg }
+                    : undefined
+                }
+              >
                 {tag}
               </span>
             ))}
           </div>
         ) : null}
 
-        <span className="btn btn-primary studio-card__cta">
+        <span
+          className="btn btn-primary studio-card__cta"
+          style={
+            cardTheme?.ctaBg
+              ? { background: cardTheme.ctaBg, color: cardTheme.ctaText || "#fff", borderColor: cardTheme.ctaBg }
+              : undefined
+          }
+        >
           Se studio
         </span>
       </div>
