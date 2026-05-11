@@ -69,11 +69,11 @@ export function createDemoStudioPreview({ submitSlug = "" } = {}) {
       accent: "#9ee0ff"
     }),
     description:
-      "En teststudio for att snabbt se hur en studiosida kan kannas innan ni fyller i allt riktigt innehall.",
+      "En teststudio för att snabbt se hur en studiosida kan kännas innan ni fyller i allt riktigt innehåll.",
     styles: ["Fineline", "Blackwork", "Ornamental"],
     previewMode: true,
     previewDisabledMessage:
-      "Det har ar en ren preview utan CRM-koppling annu. Oppna /studio-preview/din-slug for att testa formularet mot en riktig studio i CRM.",
+      "Det här är en ren preview utan CRM-koppling ännu. Öppna /studio-preview/din-slug för att testa formuläret mot en riktig studio i CRM.",
     bookingFlow: {
       enabled: true,
       defaultPresetId: "demo-fineline",
@@ -104,11 +104,11 @@ export function createDemoStudioPreview({ submitSlug = "" } = {}) {
     publicProfile: {
       enabled: Boolean(normalizedSubmitSlug),
       showInDirectory: false,
-      headline: "Illustrativa tatueringar med lugn, modern studiokansla.",
+      headline: "Illustrativa tatueringar med lugn, modern studiokänsla.",
       cardSummary:
-        "Testprofil for att snabbt prova layout, tonalitet och kundflode innan publicering.",
+        "Testprofil för att snabbt prova layout, tonalitet och kundflöde innan publicering.",
       intro:
-        "Den har demosidan ar till for att ni snabbt ska kunna se hur en studiosida pa Ink Revenue beter sig med hero, intro, galleri och bokningsformular. Nar ni ar nojda kan samma struktur kopplas till en riktig studio i CRM.",
+        "Den här demosidan är till för att ni snabbt ska kunna se hur en studiosida på Ink Revenue beter sig med hero, intro, galleri och bokningsformulär. När ni är nöjda kan samma struktur kopplas till en riktig studio i CRM.",
       serviceArea: "Stockholm med omnejd",
       websiteUrl: "",
       instagramUrl: "",
@@ -136,9 +136,9 @@ export function createDemoStudioPreview({ submitSlug = "" } = {}) {
           backgroundEnd: "#764c39"
         })
       ],
-      formTitle: "Beratta om din ide",
+      formTitle: "Berätta om din idé",
       formIntro:
-        "Det har formularet ar samma typ av infolde som en riktig studio kan ta emot fran sin publika sida.",
+        "Det här formuläret är samma typ av inlöde som en riktig studio kan ta emot från sin publika sida.",
       successMessage:
         "Tack! Det har ar demoformatet for hur ett skickat formular kan bekräftas till kunden."
     }

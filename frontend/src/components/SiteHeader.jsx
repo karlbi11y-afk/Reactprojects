@@ -73,7 +73,7 @@ export function SiteHeader({ currentPath }) {
             href={strategyHref}
             onClick={() => setMenuOpen(false)}
           >
-            Boka strategisamtal
+            Boka gratis strategisamtal
           </SiteLink>
         </nav>
 

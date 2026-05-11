@@ -463,6 +463,24 @@ h1 {
   gap: 24px;
 }
 
+.card-grid--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.card__price-model {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.card--featured {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent), var(--shadow);
+}
+
 .card {
   background: #fff;
   color: var(--text);
@@ -946,6 +964,34 @@ h1 {
 .form-step {
   display: grid;
   gap: 14px;
+}
+
+.booking-type-selector {
+  display: flex;
+  gap: 8px;
+}
+
+.booking-type-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.booking-type-btn:hover {
+  border-color: var(--accent);
+}
+
+.booking-type-btn--active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
 }
 
 .form-step-nav {
@@ -2279,6 +2325,10 @@ h1 {
     grid-template-columns: 1fr;
   }
 
+  .card-grid--4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   /* Studio grid: 2 kolumner på tablet/mobil */
   .studio-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2462,6 +2512,10 @@ h1 {
 
   .card-grid {
     gap: 16px;
+  }
+
+  .card-grid--4 {
+    grid-template-columns: 1fr;
   }
 
   .card {

@@ -18,6 +18,7 @@ const baseForm = {
   name: "",
   email: "",
   phone: "",
+  bookingType: "tattoo_session",
   tattooStyle: "",
   placement: "",
   size: "",
@@ -223,6 +224,9 @@ function buildSizeOptions(studio) {
 }
 
 function hasEnoughDetailsForCalendar(formData) {
+  if (formData.bookingType === "consultation") {
+    return Boolean(String(formData.description || "").trim());
+  }
   return Boolean(
     String(formData.tattooStyle || "").trim() &&
       String(formData.placement || "").trim() &&
@@ -240,15 +244,21 @@ function clearRequestedTimeSelection(currentFormData, requestedDurationMinutes =
 }
 
 function computeFieldError(name, formData) {
+  const isConsultation = formData.bookingType === "consultation";
   switch (name) {
     case "tattooStyle":
+      if (isConsultation) return "";
       return !formData.tattooStyle.trim() ? "Fyll i tatueringsstil." : "";
     case "placement":
+      if (isConsultation) return "";
       return !formData.placement.trim() ? "Fyll i placering." : "";
     case "size":
+      if (isConsultation) return "";
       return !formData.size.trim() ? "Fyll i storlek." : "";
     case "description":
-      return !formData.description.trim() ? "Beskriv motiv och önskemål." : "";
+      return !formData.description.trim()
+        ? isConsultation ? "Berätta kort vad du vill diskutera." : "Beskriv motiv och önskemål."
+        : "";
     case "name":
       return formData.name.trim().length < 2 ? "Fyll i ditt namn." : "";
     case "email":
@@ -398,6 +408,7 @@ export function StudioLeadFormEnhanced({
       name: formData.name,
       email: formData.email,
       phone: formData.phone,
+      bookingType: formData.bookingType,
       tattooStyle: formData.tattooStyle,
       placement: formData.placement,
       size: formData.size,
@@ -588,9 +599,12 @@ export function StudioLeadFormEnhanced({
   function handleNext() {
     const stepId = steps[currentStep].id;
     if (stepId === "tattoo") {
-      const newTouched = new Set([...touched, ...STEP_TATTOO_FIELDS]);
+      const fieldsToValidate = formData.bookingType === "consultation"
+        ? ["description"]
+        : STEP_TATTOO_FIELDS;
+      const newTouched = new Set([...touched, ...fieldsToValidate]);
       setTouched(newTouched);
-      if (STEP_TATTOO_FIELDS.some((f) => computeFieldError(f, formData))) return;
+      if (fieldsToValidate.some((f) => computeFieldError(f, formData))) return;
     }
     if (stepId === "time") {
       if (requiresTimeSelection && (!formData.preferredSlots || formData.preferredSlots.length === 0)) {
@@ -613,6 +627,7 @@ export function StudioLeadFormEnhanced({
     const selectedSlot = formData.preferredSlots?.[0] || null;
     const response = await createPublicStudioLead(studio.slug, {
       ...formData,
+      bookingType: formData.bookingType || "tattoo_session",
       privacyConsent: true,
       marketingConsent: false,
       draftId,
@@ -640,7 +655,7 @@ export function StudioLeadFormEnhanced({
         state: "success",
         message:
           response?.successMessage ||
-          "Tack! Din förfrågan är skickad. Studion återkopplar normalt inom 24 timmar via e-post eller telefon."
+          "Tack! Din förfrågan är skickad. Studion återkopplar normalt inom 24 timmar via e-post eller telefon — dygnet runt, alla dagar."
       });
     }
     setFormData(buildInitialForm());
@@ -810,6 +825,24 @@ export function StudioLeadFormEnhanced({
 
       {stepId === "tattoo" && (
         <div className="form-step">
+          <div className="booking-type-selector">
+            <button
+              type="button"
+              className={`booking-type-btn ${formData.bookingType === "tattoo_session" ? "booking-type-btn--active" : ""}`}
+              onClick={() => { setFormData((c) => ({ ...c, bookingType: "tattoo_session" })); setTouched(new Set()); }}
+            >
+              Tatueringsbokning
+            </button>
+            <button
+              type="button"
+              className={`booking-type-btn ${formData.bookingType === "consultation" ? "booking-type-btn--active" : ""}`}
+              onClick={() => { setFormData((c) => ({ ...c, bookingType: "consultation" })); setTouched(new Set()); }}
+            >
+              Konsultation
+            </button>
+          </div>
+
+          {formData.bookingType === "tattoo_session" && (
           <div className="form-grid">
             <label
               htmlFor="lead-style"
@@ -902,17 +935,24 @@ export function StudioLeadFormEnhanced({
               />
             </label>
           </div>
+          )}
 
           <label
             htmlFor="lead-description"
             className={getFieldError("description") ? "has-error" : ""}
           >
-            Berätta om din tatuering <span className="field-required">*</span>
+            {formData.bookingType === "consultation"
+              ? <>Vad vill du diskutera? <span className="field-required">*</span></>
+              : <>Berätta om din tatuering <span className="field-required">*</span></>}
             <textarea
               id="lead-description"
               name="description"
               rows="5"
-              placeholder="Beskriv motiv, känsla, referenser och allt som är viktigt för studion att veta."
+              placeholder={
+                formData.bookingType === "consultation"
+                  ? "Berätta kort om din idé, dina frågor eller vad du vill gå igenom under konsultationen."
+                  : "Beskriv motiv, känsla, referenser och allt som är viktigt för studion att veta."
+              }
               value={formData.description}
               onChange={handleChange}
               onBlur={handleBlur}

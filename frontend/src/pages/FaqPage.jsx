@@ -28,11 +28,23 @@ const FAQ_ITEMS = [
   },
   {
     q: "Vad kostar det?",
-    a: "Vi arbetar med månadsabonnemang utan bindningstid. Priset anpassas efter studio-storlek och vilka kanaler vi kör. Boka ett gratis strategisamtal så går vi igenom vad som passar er bäst."
+    a: "Priset beror på vilken plan ni väljer: Hemsidebygge (engångskostnad), Marknadsföringsplan (procentandel per inkommen kund), Bokningsplan (månadsabonnemang) eller Kombipaket (allt utom hemsidebygge, procentandel per kund). Boka ett gratis strategisamtal så går vi igenom vilket upplägg som passar er bäst.",
+    aNode: (
+      <>
+        <p>Priset beror på vilken plan ni väljer. Vi erbjuder fyra upplägg:</p>
+        <ul>
+          <li><strong>Hemsidebygge</strong> — engångskostnad</li>
+          <li><strong>Marknadsföringsplan</strong> — procentandel per inkommen kund, inget fast månadspris</li>
+          <li><strong>Bokningsplan</strong> — fast månadsabonnemang utan bindningstid</li>
+          <li><strong>Kombipaket</strong> — allt i ett (utom hemsidebygge), procentandel per inkommen kund</li>
+        </ul>
+        <p>Boka ett gratis strategisamtal så går vi igenom vilket upplägg som passar er bäst.</p>
+      </>
+    )
   },
   {
     q: "Hur kommer kunderna i kontakt med oss via Ink Revenue?",
-    a: "Kunder hittar er studio via vår katalog, söker på stil och stad, läser om er och skickar en förfrågan direkt via formuläret på er studio-sida. Förfrågan hamnar hos er — ni svarar och bokar som vanligt."
+    a: "Kunder når er på två sätt: Vi marknadsför er studio på era sociala medier. Te.x Instagram, TikTok och facebook med mer. Så att ni kontinuerligt får nya följare och förfrågningar direkt därifrån. Utöver det syns ni i vår katalog på Ink Revenue, där kunder söker på stil och stad och skickar en förfrågan via formuläret på er studio-sida. Förfrågan hamnar hos er — vi svarar och bokar in dem."
   },
   {
     q: "Kan vi se hur många förfrågningar vi får?",
@@ -75,10 +87,10 @@ export function FaqPage() {
       <section className="section section--white">
         <div className="container" style={{ maxWidth: 800 }}>
           <dl className="faq-page__list">
-            {FAQ_ITEMS.map(({ q, a }) => (
+            {FAQ_ITEMS.map(({ q, a, aNode }) => (
               <div key={q} className="faq-page__item">
                 <dt className="faq-page__q">{q}</dt>
-                <dd className="faq-page__a">{a}</dd>
+                <dd className="faq-page__a">{aNode ?? a}</dd>
               </div>
             ))}
           </dl>

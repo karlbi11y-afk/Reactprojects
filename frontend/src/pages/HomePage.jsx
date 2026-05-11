@@ -29,6 +29,10 @@ const FAQ_ITEMS = [
   {
     q: "Fungerar det för soloartister också?",
     a: "Absolut. Ink Revenue passar lika bra för soloartister som för studios med flera konstnärer. Vi anpassar upplägg och budget efter er situation."
+  },
+  {
+    q: "Hur snabbt kan vi komma igång?",
+    a: "Uppstart sker normalt inom 1 vecka efter att ni godkänt upplägget. Vi sätter upp er studio-sida, startar rätt kanaler och ni kan börja ta emot förfrågningar nästan direkt."
   }
 ];
 
@@ -317,6 +321,51 @@ export function HomePage() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg>
               Uppstart inom 1 vecka
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Planer ── */}
+      <section className="section section--white" id="planer">
+        <div className="container">
+          <div style={{ textAlign: "center", maxWidth: 620, margin: "0 auto 52px" }}>
+            <p className="eyebrow">Upplägg &amp; Priser</p>
+            <h2>Välj det som passar er</h2>
+            <p className="body" style={{ fontSize: "1.05rem" }}>
+              Vi har fyra upplägg — ni betalar bara för det ni faktiskt behöver. Exakta priser går vi igenom under strategisamtalet.
+            </p>
+          </div>
+
+          <div className="card-grid card-grid--4">
+            <div className="card">
+              <h3>Hemsidebygge</h3>
+              <p className="card__price-model">Engångskostnad</p>
+              <p>Vi bygger er studio-sida från grunden — professionell, optimerad och redo att ta emot kunder.</p>
+            </div>
+            <div className="card">
+              <h3>Marknadsföringsplan</h3>
+              <p className="card__price-model">% per inkommen kund</p>
+              <p>Vi kör er marknadsföring på sociala medier och annonser. Ni betalar en andel per kund vi genererar — ingen fast månadsavgift.</p>
+            </div>
+            <div className="card">
+              <h3>Bokningsplan</h3>
+              <p className="card__price-model">Månadsabonnemang</p>
+              <p>Fast månadsavgift utan bindningstid. Inkluderar er studio-sida i katalogen, bokningsformulär och CRM-dashboard.</p>
+            </div>
+            <div className="card card--featured">
+              <h3>Kombipaket</h3>
+              <p className="card__price-model">% per inkommen kund</p>
+              <p>Allt i ett — marknadsföring, studio-sida och bokningshantering. Ni betalar per kund vi levererar. Det kompletta upplägget.</p>
+            </div>
+          </div>
+
+          <div style={{ textAlign: "center", marginTop: 40 }}>
+            <SiteLink className="btn btn-primary" href="#bokning">
+              Boka gratis strategisamtal — vi går igenom priserna
+              <svg className="btn__icon" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M4 10h12M10 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </SiteLink>
           </div>
         </div>
       </section>
