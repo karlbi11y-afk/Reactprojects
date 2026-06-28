@@ -87,6 +87,12 @@ export function SiteFooter({ onOpenLegalModal }) {
         </div>
 
         <p className="footer__copy">Copyright 2026. Ink Revenue. All rights reserved.</p>
+        <p className="footer__credit">
+          Webbdesign av{" "}
+          <a href="https://webwork.se/" target="_blank" rel="noopener">
+            webwork.se
+          </a>
+        </p>
       </div>
     </footer>
   );

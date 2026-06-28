@@ -1107,6 +1107,24 @@ h1 {
   color: rgba(255, 255, 255, 0.7);
 }
 
+.footer__credit {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.55);
+  margin-top: 4px;
+}
+
+.footer__credit a {
+  color: rgba(255, 255, 255, 0.78);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.footer__credit a:hover {
+  color: #fff;
+  border-bottom-color: rgba(255, 255, 255, 0.6);
+}
+
 .site-header {
   position: sticky;
   top: 0;
