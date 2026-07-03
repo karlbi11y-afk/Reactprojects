@@ -1,5 +1,8 @@
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-const maxSourceFileBytes = 10 * 1024 * 1024;
+// Största fil användaren får välja. Exponeras så att formuläret kan visa gränsen
+// och använda samma siffra i felmeddelandet.
+export const MAX_INSPIRATION_IMAGE_MB = 10;
+const maxSourceFileBytes = MAX_INSPIRATION_IMAGE_MB * 1024 * 1024;
 const maxOutputFileBytes = 3.5 * 1024 * 1024;
 const maxDimension = 1600;
 const outputQuality = 0.82;
@@ -55,11 +58,16 @@ export async function prepareLeadImageUpload(file) {
   }
 
   if (!allowedImageTypes.has(file.type)) {
-    throw new Error("Välj en JPG-, PNG- eller WEBP-bild.");
+    throw new Error(
+      "Filformatet stöds inte. Ladda upp en bild i JPG-, PNG- eller WEBP-format."
+    );
   }
 
   if (file.size > maxSourceFileBytes) {
-    throw new Error("Bilden är för stor. Välj en fil under 10 MB.");
+    const fileMb = (file.size / (1024 * 1024)).toFixed(1);
+    throw new Error(
+      `Bilden är för stor (${fileMb} MB). Välj en fil på högst ${MAX_INSPIRATION_IMAGE_MB} MB.`
+    );
   }
 
   const image = await loadImage(file);
@@ -86,7 +94,9 @@ export async function prepareLeadImageUpload(file) {
   }
 
   if (blob.size > maxOutputFileBytes) {
-    throw new Error("Bilden blev fortfarande för stor. Välj gärna en mindre bild.");
+    throw new Error(
+      "Bilden är för detaljrik för att komprimeras tillräckligt. Prova en mindre bild eller en lägre upplösning."
+    );
   }
 
   const dataUrl = await blobToDataUrl(blob);

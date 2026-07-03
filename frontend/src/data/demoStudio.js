@@ -71,11 +71,25 @@ export function createDemoStudioPreview({ submitSlug = "" } = {}) {
     description:
       "En teststudio för att snabbt se hur en studiosida kan kännas innan ni fyller i allt riktigt innehåll.",
     styles: ["Fineline", "Blackwork", "Ornamental"],
+    styleOptions: [
+      { label: "Fineline / mycket detalj", value: "Fineline / mycket detalj" },
+      { label: "Black & grey realism", value: "Black & grey realism" },
+      { label: "Cover-up", value: "Cover-up" },
+      { label: "Ornamental / mycket mönster", value: "Ornamental / mycket mönster" }
+    ],
     previewMode: true,
     previewDisabledMessage:
       "Det här är en ren preview utan CRM-koppling ännu. Öppna /studio-preview/din-slug för att testa formuläret mot en riktig studio i CRM.",
     bookingFlow: {
       enabled: true,
+      estimatorSummary: {
+        sizeThresholds: {
+          tinyMaxCentimeters: 2,
+          smallMaxCentimeters: 5,
+          mediumMaxCentimeters: 12,
+          largeMaxCentimeters: 20
+        }
+      },
       defaultPresetId: "demo-fineline",
       presets: [
         {

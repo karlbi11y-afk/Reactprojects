@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { FormLegalLinks } from "./FormLegalLinks";
+import { CustomSelect } from "./CustomSelect";
 import { useLegalConsent } from "../contexts/LegalConsentContext";
 import {
   createPublicStudioLead,
@@ -10,9 +11,54 @@ import {
 } from "../services/publicSiteApi";
 import { useAbandonedFormDraft } from "../hooks/useAbandonedFormDraft";
 import { getLeadSourceFromUrl, getTrackingPayload } from "../utils/tracking";
-import { prepareLeadImageUpload } from "../utils/prepareLeadImageUpload";
+import { prepareLeadImageUpload, MAX_INSPIRATION_IMAGE_MB } from "../utils/prepareLeadImageUpload";
 
 const WEEKDAY_LABELS = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
+
+// Sentinelvärde för "Annat" i stil-dropdownen. Väljs det byter formuläret till
+// konsultation eftersom studion inte har en tidsberäkning för stilen.
+const OTHER_STYLE_VALUE = "__other__";
+
+// Reservlista om studion saknar konfigurerade modifierare/stilar, så att
+// dropdownen aldrig blir tom.
+const FALLBACK_STYLE_OPTIONS = [
+  { label: "Fineline / mycket detalj", value: "Fineline / mycket detalj" },
+  { label: "Black & grey realism", value: "Black & grey realism" },
+  { label: "Cover-up", value: "Cover-up" },
+  { label: "Ornamental / mycket mönster", value: "Ornamental / mycket mönster" }
+];
+
+// Bygger dropdown-alternativen från studions data. Föredrar styleOptions
+// (modifierarnas labels från backend), faller tillbaka på studio.styles och
+// därefter en reservlista.
+function buildStyleOptions(studio) {
+  const fromModifiers = Array.isArray(studio?.styleOptions)
+    ? studio.styleOptions
+        .map((option) => {
+          if (typeof option === "string") {
+            const value = option.trim();
+            return value ? { label: value, value } : null;
+          }
+          const value = String(option?.value || option?.label || "").trim();
+          const label = String(option?.label || value).trim();
+          return value ? { label: label || value, value } : null;
+        })
+        .filter(Boolean)
+    : [];
+
+  if (fromModifiers.length > 0) return fromModifiers;
+
+  const fromStyles = Array.isArray(studio?.styles)
+    ? studio.styles
+        .map((style) => String(style || "").trim())
+        .filter(Boolean)
+        .map((style) => ({ label: style, value: style }))
+    : [];
+
+  if (fromStyles.length > 0) return fromStyles;
+
+  return FALLBACK_STYLE_OPTIONS;
+}
 
 const baseForm = {
   name: "",
@@ -204,23 +250,36 @@ function buildSizeOptions(studio) {
 
   const { tinyMaxCentimeters, smallMaxCentimeters, mediumMaxCentimeters, largeMaxCentimeters } = thresholds;
 
+  // Bygg storleks-tiers utifrån studions cm-trösklar (satta i bokningsreglerna).
+  // Använd labeln som value så att studion ser den beskrivande storleken i CRM:et,
+  // inte bara ett bart cm-tal.
   const options = [];
 
   if (tinyMaxCentimeters > 0) {
-    options.push({ value: `${tinyMaxCentimeters}cm`, label: `Mycket liten (upp till ${tinyMaxCentimeters} cm)` });
+    options.push(`Mycket liten (upp till ${tinyMaxCentimeters} cm)`);
   }
   if (smallMaxCentimeters > 0 && smallMaxCentimeters > tinyMaxCentimeters) {
-    options.push({ value: `${smallMaxCentimeters}cm`, label: `Liten (upp till ${smallMaxCentimeters} cm)` });
+    options.push(`Liten (upp till ${smallMaxCentimeters} cm)`);
   }
   if (mediumMaxCentimeters > 0 && mediumMaxCentimeters > smallMaxCentimeters) {
-    options.push({ value: `${mediumMaxCentimeters}cm`, label: `Mellanstor (upp till ${mediumMaxCentimeters} cm)` });
+    options.push(`Mellanstor (upp till ${mediumMaxCentimeters} cm)`);
   }
   if (largeMaxCentimeters > 0 && largeMaxCentimeters > mediumMaxCentimeters) {
-    options.push({ value: `${largeMaxCentimeters}cm`, label: `Stor (upp till ${largeMaxCentimeters} cm)` });
+    options.push(`Stor (upp till ${largeMaxCentimeters} cm)`);
   }
-  options.push({ value: "extra_large", label: "Extra stor / helarm / rygg" });
 
-  return options.length >= 2 ? options : null;
+  // Största tröskeln som finns blir undre gräns för "extra stor".
+  const largestThreshold = [largeMaxCentimeters, mediumMaxCentimeters, smallMaxCentimeters, tinyMaxCentimeters]
+    .find((cm) => cm > 0);
+  options.push(
+    largestThreshold
+      ? `Extra stor (över ${largestThreshold} cm)`
+      : "Extra stor / helarm / rygg"
+  );
+
+  return options.length >= 2
+    ? options.map((label) => ({ value: label, label }))
+    : null;
 }
 
 function hasEnoughDetailsForCalendar(formData) {
@@ -355,8 +414,23 @@ export function StudioLeadFormEnhanced({
   const [visibleWeekIndex, setVisibleWeekIndex] = useState(0);
   const [inspirationImage, setInspirationImage] = useState(null);
   const [imageProcessing, setImageProcessing] = useState(false);
+  const [imageError, setImageError] = useState("");
   const [currentStep, setCurrentStep] = useState(0);
   const [touched, setTouched] = useState(new Set());
+  // Sätts när kunden valde "Annat" i stil-dropdownen och vi därför bytte till
+  // konsultation, så vi kan förklara varför för kunden.
+  const [styleFellBackToConsultation, setStyleFellBackToConsultation] = useState(false);
+
+  const styleOptions = useMemo(() => buildStyleOptions(studio), [studio]);
+  // Stil-listan för dropdownen: studions stilar + ett "Annat" längst ner som
+  // växlar till konsultation.
+  const styleSelectOptions = useMemo(
+    () => [
+      ...styleOptions.map((option) => ({ label: option.label, value: option.value })),
+      { label: "Annat (stilen finns inte)", value: OTHER_STYLE_VALUE, isOther: true }
+    ],
+    [styleOptions]
+  );
 
   // Stripe Connect state
   const [stripePromise, setStripePromise] = useState(null);
@@ -375,9 +449,9 @@ export function StudioLeadFormEnhanced({
 
   const steps = useMemo(() => {
     return [
-      { id: "tattoo", label: "Om tatueringen" },
-      ...(canShowCalendar ? [{ id: "time", label: "Välj tid" }] : []),
-      { id: "contact", label: "Dina uppgifter" }
+      { id: "tattoo", label: "Om tatueringen", heading: "Berätta om din tatuering" },
+      ...(canShowCalendar ? [{ id: "time", label: "Välj tid", heading: "Välj en tid som passar" }] : []),
+      { id: "contact", label: "Dina uppgifter", heading: "Dina kontaktuppgifter" }
     ];
   }, [canShowCalendar]);
 
@@ -541,6 +615,25 @@ export function StudioLeadFormEnhanced({
     }));
   }
 
+  // Stil väljs i en dropdown. Väljer kunden "Annat" (stilen finns inte hos
+  // studion) byter vi till konsultation eftersom det inte går att tidsberäkna,
+  // och visar en förklaring. Annars sätts stilen som vanligt.
+  function handleStyleChange(event) {
+    const { value } = event.target;
+    if (value === OTHER_STYLE_VALUE) {
+      setFormData((current) => ({
+        ...current,
+        bookingType: "consultation",
+        tattooStyle: ""
+      }));
+      setStyleFellBackToConsultation(true);
+      setTouched(new Set());
+      return;
+    }
+    setStyleFellBackToConsultation(false);
+    setFormData((current) => ({ ...current, tattooStyle: value }));
+  }
+
   function handleBlur(event) {
     const { name } = event.target;
     setTouched((prev) => new Set([...prev, name]));
@@ -568,6 +661,7 @@ export function StudioLeadFormEnhanced({
 
   async function handleImageChange(event) {
     const file = event.target.files?.[0];
+    setImageError("");
     if (!file) {
       setInspirationImage(null);
       return;
@@ -578,10 +672,11 @@ export function StudioLeadFormEnhanced({
       setInspirationImage(preparedImage);
     } catch (error) {
       setInspirationImage(null);
-      setStatus({
-        state: "error",
-        message: error.message || "Det gick inte att förbereda bilden för uppladdning."
-      });
+      // Rensa filväljaren så samma fil kan väljas igen efter ett fel.
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      setImageError(
+        error.message || "Det gick inte att förbereda bilden för uppladdning. Försök igen."
+      );
     } finally {
       setImageProcessing(false);
     }
@@ -589,6 +684,7 @@ export function StudioLeadFormEnhanced({
 
   function handleRemoveImage() {
     setInspirationImage(null);
+    setImageError("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -783,9 +879,15 @@ export function StudioLeadFormEnhanced({
       id="studio-form"
       ref={formTopRef}
     >
-      {titleText || studio?.publicProfile?.formTitle ? (
-        <h2>{titleText || studio?.publicProfile?.formTitle}</h2>
-      ) : null}
+      {(() => {
+        // Studions egna titel gäller bara på första steget; övriga steg får en
+        // stegspecifik rubrik så att t.ex. kontaktsteget inte säger "din tatuering".
+        const configuredTitle = titleText || studio?.publicProfile?.formTitle;
+        const heading = currentStep === 0
+          ? (configuredTitle || steps[currentStep]?.heading)
+          : steps[currentStep]?.heading;
+        return heading ? <h2>{heading}</h2> : null;
+      })()}
       {introText ? <p className="form-note">{introText}</p> : null}
       {previewMode && successPreviewText ? (
         <div>
@@ -829,18 +931,26 @@ export function StudioLeadFormEnhanced({
             <button
               type="button"
               className={`booking-type-btn ${formData.bookingType === "tattoo_session" ? "booking-type-btn--active" : ""}`}
-              onClick={() => { setFormData((c) => ({ ...c, bookingType: "tattoo_session" })); setTouched(new Set()); }}
+              onClick={() => { setStyleFellBackToConsultation(false); setFormData((c) => ({ ...c, bookingType: "tattoo_session" })); setTouched(new Set()); }}
             >
               Tatueringsbokning
             </button>
             <button
               type="button"
               className={`booking-type-btn ${formData.bookingType === "consultation" ? "booking-type-btn--active" : ""}`}
-              onClick={() => { setFormData((c) => ({ ...c, bookingType: "consultation" })); setTouched(new Set()); }}
+              onClick={() => { setStyleFellBackToConsultation(false); setFormData((c) => ({ ...c, bookingType: "consultation" })); setTouched(new Set()); }}
             >
               Konsultation
             </button>
           </div>
+
+          {formData.bookingType === "consultation" && styleFellBackToConsultation && (
+            <p className="booking-type-note" role="status">
+              Stilen du sökte finns inte bland studions valbara stilar, så vi har
+              växlat till en konsultation. Beskriv vad du vill ha så återkommer
+              studion med ett förslag.
+            </p>
+          )}
 
           {formData.bookingType === "tattoo_session" && (
           <div className="form-grid">
@@ -849,15 +959,16 @@ export function StudioLeadFormEnhanced({
               className={getFieldError("tattooStyle") ? "has-error" : ""}
             >
               Stil <span className="field-required">*</span>
-              <input
+              <CustomSelect
                 id="lead-style"
-                type="text"
                 name="tattooStyle"
-                placeholder="Fineline, realism, blackwork..."
                 value={formData.tattooStyle}
-                onChange={handleChange}
+                onChange={handleStyleChange}
                 onBlur={handleBlur}
-                aria-invalid={!!getFieldError("tattooStyle")}
+                options={styleSelectOptions}
+                placeholder="Välj stil..."
+                ariaInvalid={!!getFieldError("tattooStyle")}
+                nativeClassName="booking-form"
               />
               {getFieldError("tattooStyle") ? (
                 <span className="field-error" role="alert">{getFieldError("tattooStyle")}</span>
@@ -890,19 +1001,17 @@ export function StudioLeadFormEnhanced({
                 const sizeOptions = buildSizeOptions(studio);
                 if (sizeOptions) {
                   return (
-                    <select
+                    <CustomSelect
                       id="lead-size"
                       name="size"
                       value={formData.size}
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      aria-invalid={!!getFieldError("size")}
-                    >
-                      <option value="">Välj storlek...</option>
-                      {sizeOptions.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
+                      options={sizeOptions}
+                      placeholder="Välj storlek..."
+                      ariaInvalid={!!getFieldError("size")}
+                      nativeClassName="booking-form"
+                    />
                   );
                 }
                 return (
@@ -972,13 +1081,19 @@ export function StudioLeadFormEnhanced({
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 onChange={handleImageChange}
+                aria-invalid={!!imageError}
+                aria-describedby="lead-image-hint"
               />
             </label>
-            <p className="form-note form-note--compact">
+            <p id="lead-image-hint" className="form-note form-note--compact">
               Valfritt. Ladda upp en bild om du vill visa stil, motiv eller referens tydligare.
+              JPG, PNG eller WEBP, max {MAX_INSPIRATION_IMAGE_MB} MB.
             </p>
             {imageProcessing ? (
               <p className="form-status form-status--muted">Bearbetar bilden...</p>
+            ) : null}
+            {imageError ? (
+              <p className="form-status form-status--error" role="alert">{imageError}</p>
             ) : null}
             {inspirationImage ? (
               <div className="upload-preview">

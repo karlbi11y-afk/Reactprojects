@@ -627,8 +627,28 @@ h1 {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
-  padding-right: 40px;
+  background-size: 18px 18px;
+  padding-right: 42px;
   cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  text-overflow: ellipsis;
+}
+
+.booking-form select:hover {
+  border-color: #b9c6de;
+  background-color: #fbfcfe;
+}
+
+/* Placeholder-alternativet ("Välj stil/storlek...") ska se dämpat ut medan
+   riktiga val är i full textfärg. */
+.booking-form select:invalid,
+.booking-form select option[value=""] {
+  color: var(--muted);
+}
+
+.booking-form select option {
+  color: var(--text);
+  padding: 8px 12px;
 }
 
 .booking-form input:focus-visible,
@@ -637,6 +657,173 @@ h1 {
   outline: 2px solid rgba(33, 95, 176, 0.35);
   border-color: rgba(33, 95, 176, 0.35);
   box-shadow: 0 0 0 4px rgba(33, 95, 176, 0.08);
+}
+
+/* Native <select> som CustomSelect renderar på mobil. Ger konsekvent chevron,
+   padding och appearance oavsett container (booking-form eller filters-panel). */
+.select-native {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 42px 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #d8e1f2;
+  font-family: inherit;
+  font-size: 0.98rem;
+  color: var(--text);
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 18px 18px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.select-native:focus-visible {
+  outline: 2px solid rgba(33, 95, 176, 0.35);
+  border-color: rgba(33, 95, 176, 0.35);
+  box-shadow: 0 0 0 4px rgba(33, 95, 176, 0.08);
+}
+
+.select-native:invalid {
+  color: var(--muted);
+}
+
+/* ---------- Custom dropdown (desktop). Mobil använder native <select>. ---------- */
+.dd {
+  position: relative;
+  width: 100%;
+}
+
+.dd__trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #d8e1f2;
+  background: #fff;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.98rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.dd__trigger:hover {
+  border-color: #b9c6de;
+  background: #fbfcfe;
+}
+
+.dd__trigger:focus-visible,
+.dd.is-open .dd__trigger {
+  outline: none;
+  border-color: rgba(33, 95, 176, 0.45);
+  box-shadow: 0 0 0 4px rgba(33, 95, 176, 0.1);
+}
+
+.dd__trigger[aria-invalid="true"] {
+  border-color: color-mix(in srgb, var(--danger) 55%, #d8e1f2);
+}
+
+.dd__value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dd__value.is-placeholder { color: var(--muted); }
+
+.dd__chevron {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: #6b7280;
+  transition: transform 0.18s ease;
+}
+.dd.is-open .dd__chevron { transform: rotate(180deg); }
+
+.dd__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  background: #fff;
+  border: 1px solid #d8e1f2;
+  border-radius: 14px;
+  box-shadow: 0 20px 48px -18px rgba(17, 34, 58, 0.45);
+  padding: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+  animation: dd-panel-in 0.16s ease;
+}
+
+@keyframes dd-panel-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.dd__option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.96rem;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.dd__option.is-active {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.dd__option.is-selected {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.dd__option-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dd__check {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--accent);
+  opacity: 0;
+}
+.dd__option.is-selected .dd__check { opacity: 1; }
+
+.dd__meta {
+  margin-left: auto;
+  padding-left: 8px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 400;
+  flex: none;
+}
+.dd__option.is-selected .dd__meta {
+  color: color-mix(in srgb, var(--accent) 70%, var(--muted));
+}
+
+.dd__option--other {
+  color: var(--muted);
+  border-top: 1px solid #eef2f8;
+  border-radius: 0 0 9px 9px;
+  margin-top: 2px;
 }
 
 .form-note {
@@ -994,6 +1181,18 @@ h1 {
   border-color: var(--accent);
   background: var(--accent);
   color: #fff;
+}
+
+/* Förklaring när "Annat" i stil-listan växlade formuläret till konsultation. */
+.booking-type-note {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.45;
 }
 
 .form-step-nav {

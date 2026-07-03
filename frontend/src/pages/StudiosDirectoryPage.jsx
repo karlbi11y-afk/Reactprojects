@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { PublicStudioCard } from "../components/PublicStudioCard";
+import { CustomSelect } from "../components/CustomSelect";
 import { getPublicStudios } from "../services/publicSiteApi";
 import { buildPageTitle, useJsonLd, usePageMetadata } from "../utils/pageMetadata";
 import { getStudioTags } from "../utils/studioTags";
@@ -213,26 +214,30 @@ export function StudiosDirectoryPage() {
 
             <label>
               Stad
-              <select name="city" value={filters.city} onChange={handleFilterChange}>
-                <option value="">Alla städer</option>
-                {cities.map((city) => (
-                  <option key={city} value={city}>
-                    {city}
-                  </option>
-                ))}
-              </select>
+              <CustomSelect
+                name="city"
+                value={filters.city}
+                onChange={handleFilterChange}
+                placeholder="Alla städer"
+                options={[
+                  { label: "Alla städer", value: "" },
+                  ...cities.map((city) => ({ label: city, value: city }))
+                ]}
+              />
             </label>
 
             <label>
               Stil
-              <select name="style" value={filters.style} onChange={handleFilterChange}>
-                <option value="">Alla stilar</option>
-                {styles.map((style) => (
-                  <option key={style} value={style}>
-                    {style}
-                  </option>
-                ))}
-              </select>
+              <CustomSelect
+                name="style"
+                value={filters.style}
+                onChange={handleFilterChange}
+                placeholder="Alla stilar"
+                options={[
+                  { label: "Alla stilar", value: "" },
+                  ...styles.map((style) => ({ label: style, value: style }))
+                ]}
+              />
             </label>
           </div>
 
