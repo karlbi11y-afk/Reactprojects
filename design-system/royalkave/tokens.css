@@ -1,0 +1,31 @@
+/* Royalkave design tokens — extracted from inkrevenue studioRegistry.royalkave
+   Monochrome, editorial, bold. Source: frontend/src/pages/studios/index.js */
+
+:root {
+  /* Color */
+  --rk-bg: #ffffff;
+  --rk-bg-alt: #f2f2f2;
+  --rk-bg-dark: #0d0d0d;
+  --rk-text: #111111;
+  --rk-text-light: #ffffff;
+  --rk-text-muted: #555555;
+  --rk-accent: #111111;
+  --rk-accent-text: #ffffff;
+  --rk-badge-bg: #111111;
+  --rk-badge-text: #ffffff;
+  --rk-cta-bg: #111111;
+  --rk-cta-text: #ffffff;
+
+  /* Typography */
+  --rk-font-heading: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
+  --rk-font-body: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --rk-heading-transform: uppercase;
+  --rk-heading-weight: 900;
+
+  /* Shape */
+  --rk-radius-pill: 999px;
+
+  /* Gradients */
+  --rk-gradient-hero: linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.2) 55%, transparent 100%);
+  --rk-gradient-card: linear-gradient(135deg, rgba(0,0,0,0.92) 0%, rgba(30,30,30,0.75) 100%);
+}
