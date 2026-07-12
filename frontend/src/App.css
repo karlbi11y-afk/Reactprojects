@@ -1053,15 +1053,6 @@ h1 {
   padding: 4px 0;
 }
 
-.week-picker__estimate {
-  font-size: 0.85rem;
-  color: var(--silver-2);
-  margin: 0 0 12px 0;
-}
-
-.week-picker__estimate strong {
-  color: var(--ink-100);
-}
 @media (max-width: 480px) {
   .week-picker__weekday {
     font-size: 0.62rem;

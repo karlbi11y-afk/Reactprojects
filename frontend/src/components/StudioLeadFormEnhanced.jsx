@@ -170,16 +170,6 @@ function getCalendarDayText(day) {
   return "Upptagen";
 }
 
-function formatDurationLabel(minutes) {
-  const normalizedMinutes = Number.parseInt(String(minutes || ""), 10);
-  if (!normalizedMinutes) return "";
-  const hours = Math.floor(normalizedMinutes / 60);
-  const remainingMinutes = normalizedMinutes % 60;
-  if (hours && remainingMinutes) return `${hours} h ${remainingMinutes} min`;
-  if (hours) return `${hours} h`;
-  return `${remainingMinutes} min`;
-}
-
 function getBookingTypeLabel(type) {
   const labels = {
     consultation: "Konsultation",
@@ -1127,12 +1117,6 @@ export function StudioLeadFormEnhanced({
 
           {availability.state === "success" && weeks.some((w) => w.days.some((d) => d.slots.length > 0)) ? (
             <section className="studio-booking-picker">
-              {availability.data?.estimatedTotalDurationMinutes ? (
-                <p className="week-picker__estimate">
-                  Uppskattad tid: <strong>{formatDurationLabel(availability.data.estimatedTotalDurationMinutes)}</strong>
-                  {availability.data?.artistName ? ` · ${availability.data.artistName}` : ""}
-                </p>
-              ) : null}
               {visibleWeek ? (
                 <div className="week-picker">
                   <div className="week-picker__toolbar">
