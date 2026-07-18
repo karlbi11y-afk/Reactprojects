@@ -1,7 +1,7 @@
 import { SiteLink } from "../utils/siteRouter";
 import { getStudioTags } from "../utils/studioTags";
 
-export function PublicStudioCard({ studio, compact = false, cardTheme = null }) {
+export function PublicStudioCard({ studio, compact = false, cardTheme = null, revealDelay }) {
   const tags = [...new Set(getStudioTags(studio))].slice(0, compact ? 3 : 5);
   const studioHref = `/studio/${studio.slug}`;
   const summary =
@@ -24,6 +24,8 @@ export function PublicStudioCard({ studio, compact = false, cardTheme = null }) 
       className={`studio-card ${compact ? "studio-card--compact" : ""}`}
       href={studioHref}
       aria-label={`Se studio ${studio.name}`}
+      data-reveal="scale"
+      data-reveal-delay={revealDelay || undefined}
     >
       <div className="studio-card__media" style={mediaStyle}>
         {studio.logoUrl ? (

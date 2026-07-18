@@ -97,7 +97,7 @@ export function StrategyCallForm() {
       return;
     }
 
-    setStatus({ state: "loading", message: "Skickar bokningsförfrågan..." });
+    setStatus({ state: "loading", message: "Skickar din förfrågan..." });
 
     try {
       const response = await createStrategyCall({
@@ -112,7 +112,7 @@ export function StrategyCallForm() {
         state: "success",
         message:
           response?.successMessage ||
-          "Tack! Vi har tagit emot din förfrågan och återkommer normalt inom 24 timmar på vardagar."
+          "Tack! Vi har tagit emot din förfrågan och återkommer normalt inom 24 timmar."
       });
       setFormData(initialForm);
       setTouched({});
@@ -128,7 +128,7 @@ export function StrategyCallForm() {
   }
 
   return (
-    <form className="booking-form" onSubmit={handleSubmit}>
+    <form className="booking-form" data-reveal="right" onSubmit={handleSubmit}>
       <p className="form-note">
         Berätta kort om nuläge och vad ni vill ha hjälp med, så kan vi göra första samtalet mer
         relevant.
@@ -176,7 +176,7 @@ export function StrategyCallForm() {
           id="strategy-email"
           type="email"
           name="email"
-          placeholder="namn@studio.online"
+          placeholder="namn@dinstudio.se"
           value={formData.email}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -230,7 +230,7 @@ export function StrategyCallForm() {
       <FormLegalLinks />
 
       <button className="btn btn-primary" type="submit" disabled={status.state === "loading"}>
-        {status.state === "loading" ? "Skickar..." : "Skicka bokningsförfrågan"}
+        {status.state === "loading" ? "Skickar..." : "Boka strategisamtalet"}
       </button>
 
       {status.message ? (

@@ -6,7 +6,7 @@ const FOOTER_STYLES = ["Fineline", "Blackwork", "Traditionell", "Realism", "Dotw
 export function SiteFooter({ onOpenLegalModal }) {
   return (
     <footer className="footer">
-      <div className="container footer__content">
+      <div className="container footer__content" data-reveal="fade">
         <div className="brand-lockup brand-lockup--footer">
           <img
             className="brand-logo brand-logo--footer"

@@ -4,7 +4,7 @@ import { SiteLink } from "../utils/siteRouter";
 const FAQ_ITEMS = [
   {
     q: "Behöver vi sköta något själva?",
-    a: "Nej. Ni godkänner material och svarar på frågor från oss — det är allt. Vi sköter annonsering, innehåll, kundkontakt och uppföljning. Ju mer ni delar med er om er stil och era preferenser, desto bättre resultat."
+    a: "Nej. Ni godkänner material och svarar på våra frågor — det är allt. Vi sköter annonser, innehåll, kundkontakt och uppföljning. Ju mer ni berättar om er stil, desto bättre blir resultatet."
   },
   {
     q: "Hur snabbt ser vi resultat?",
@@ -12,7 +12,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Vad är skillnaden mot att sköta Instagram eller Google själv?",
-    a: "Att sköta marknadsföringen själv tar tid, kräver kunskap och ger ofta ojämna resultat. Vi är specialiserade på tatueringsmarknaden — vi vet vad som fungerar, kör det konsekvent och rapporterar resultaten. Ni betalar för en hel marknadsföringsavdelning till en bråkdel av kostnaden."
+    a: "Att göra det själv tar tid och ger ofta ojämna resultat. Vi är specialiserade på tatueringsbranschen och vet vad som fungerar — ni får en hel marknadsföringsavdelning till en bråkdel av kostnaden."
   },
   {
     q: "Hur ser vår studio-sida ut?",
@@ -25,6 +25,10 @@ const FAQ_ITEMS = [
   {
     q: "Fungerar det för soloartister också?",
     a: "Absolut. Ink Revenue passar lika bra för soloartister som för studios med flera konstnärer. Vi anpassar upplägg och budget efter er situation."
+  },
+  {
+    q: "Hur snabbt kan vi komma igång?",
+    a: "Uppstart sker normalt inom 1 vecka efter att ni godkänt upplägget. Vi sätter upp er studio-sida, startar rätt kanaler och ni kan börja ta emot förfrågningar nästan direkt."
   },
   {
     q: "Vad kostar det?",
@@ -44,11 +48,11 @@ const FAQ_ITEMS = [
   },
   {
     q: "Hur kommer kunderna i kontakt med oss via Ink Revenue?",
-    a: "Kunder når er på två sätt: Vi marknadsför er studio på era sociala medier. Te.x Instagram, TikTok och facebook med mer. Så att ni kontinuerligt får nya följare och förfrågningar direkt därifrån. Utöver det syns ni i vår katalog på Ink Revenue, där kunder söker på stil och stad och skickar en förfrågan via formuläret på er studio-sida. Förfrågan hamnar hos er — vi svarar och bokar in dem."
+    a: "På två sätt. Dels marknadsför vi er i era egna kanaler — Instagram, TikTok och Facebook — så att ni löpande får nya följare och förfrågningar därifrån. Dels syns ni i vår studio-katalog, där kunder filtrerar på stil och stad och skickar en förfrågan direkt via er studio-sida. Alla förfrågningar samlas hos er — vi svarar och bokar in."
   },
   {
     q: "Kan vi se hur många förfrågningar vi får?",
-    a: "Ja. Ni har tillgång till er dashboard i CRM-systemet där ni ser alla leads, förfrågningar och statistik i realtid."
+    a: "Ja. Ni loggar in och ser alla förfrågningar, bokningar och er statistik i realtid."
   }
 ];
 
@@ -87,15 +91,15 @@ export function FaqPage() {
       <section className="section section--white">
         <div className="container" style={{ maxWidth: 800 }}>
           <dl className="faq-page__list">
-            {FAQ_ITEMS.map(({ q, a, aNode }) => (
-              <div key={q} className="faq-page__item">
+            {FAQ_ITEMS.map(({ q, a, aNode }, index) => (
+              <div key={q} className="faq-page__item" data-reveal="up" data-reveal-delay={Math.min(index, 2) || undefined}>
                 <dt className="faq-page__q">{q}</dt>
                 <dd className="faq-page__a">{aNode ?? a}</dd>
               </div>
             ))}
           </dl>
 
-          <div className="faq-page__cta">
+          <div className="faq-page__cta" data-reveal="up">
             <p>Hittade du inte svar på din fråga?</p>
             <SiteLink className="btn btn-primary" href="/#bokning">
               Boka ett gratis strategisamtal

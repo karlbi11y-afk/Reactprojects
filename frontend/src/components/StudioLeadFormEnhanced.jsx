@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { loadStripe } from "@stripe/stripe-js";
+import { loadStripe } from "@stripe/stripe-js/pure";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { FormLegalLinks } from "./FormLegalLinks";
 import { CustomSelect } from "./CustomSelect";

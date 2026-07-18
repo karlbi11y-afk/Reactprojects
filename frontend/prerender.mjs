@@ -21,12 +21,22 @@ const ROUTES = [
   "/",
   "/studios",
   "/faq",
+  "/testa-gratis",
   "/studio/royalkave",
 ];
 
 async function main() {
   // Read the HTML shell produced by vite build
   const htmlShell = fs.readFileSync(path.join(distDir, "index.html"), "utf-8");
+
+  // Guard: körs skriptet en andra gång är dist/index.html redan den
+  // prerendrade startsidan — då skulle alla rutter skrivas med fel innehåll.
+  if (!htmlShell.includes('<div id="root"></div>')) {
+    console.error(
+      "[prerender] dist/index.html är inte den orörda Vite-shellen (root-diven är inte tom). Kör om 'npm run build'."
+    );
+    process.exit(1);
+  }
 
   // Import the SSR bundle (pathToFileURL needed on Windows for ESM dynamic import)
   const { pathToFileURL } = await import("url");

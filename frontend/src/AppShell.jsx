@@ -8,9 +8,11 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 import { StudioCrmPreviewPage } from "./pages/StudioCrmPreviewPage";
 import { StudioProfilePage } from "./pages/StudioProfilePage";
 import { StudiosDirectoryPage } from "./pages/StudiosDirectoryPage";
+import { TrialPage } from "./pages/TrialPage";
 import { studioRegistry } from "./pages/studios";
 import { ThemedStudioPage } from "./pages/studios/ThemedStudioPage";
 import { useSiteLocation } from "./utils/siteRouter";
+import { useScrollReveal } from "./utils/useScrollReveal";
 
 function getPageFromPath(pathname) {
   if (pathname === "/") {
@@ -31,6 +33,16 @@ function getPageFromPath(pathname) {
     return {
       currentPath: pathname,
       element: <FaqPage />
+    };
+  }
+
+  // Fokuserad landningssida för trial-trafik (Instagram-bio m.m.) —
+  // headern döljs så att sidans enda CTA inte konkurrerar med navigationen.
+  if (pathname === "/testa-gratis") {
+    return {
+      currentPath: pathname,
+      element: <TrialPage />,
+      hideHeader: true
     };
   }
 
@@ -81,9 +93,11 @@ function AppContent() {
   const page = getPageFromPath(location.pathname);
   const { openLegalModal } = useLegalConsent();
 
+  useScrollReveal();
+
   return (
     <div>
-      <SiteHeader currentPath={page.currentPath} />
+      {!page.hideHeader && <SiteHeader currentPath={page.currentPath} />}
       <main>{page.element}</main>
       <SiteFooter onOpenLegalModal={openLegalModal} />
     </div>

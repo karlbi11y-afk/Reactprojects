@@ -8,7 +8,7 @@ import { SiteLink } from "../utils/siteRouter";
 const FAQ_ITEMS = [
   {
     q: "Behöver vi sköta något själva?",
-    a: "Nej. Ni godkänner material och svarar på frågor från oss — det är allt. Vi sköter annonsering, innehåll, kundkontakt och uppföljning. Ju mer ni delar med er om er stil och era preferenser, desto bättre resultat."
+    a: "Nej. Ni godkänner material och svarar på våra frågor — det är allt. Vi sköter annonser, innehåll, kundkontakt och uppföljning. Ju mer ni berättar om er stil, desto bättre blir resultatet."
   },
   {
     q: "Hur snabbt ser vi resultat?",
@@ -16,7 +16,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Vad är skillnaden mot att sköta Instagram eller Google själv?",
-    a: "Att sköta marknadsföringen själv tar tid, kräver kunskap och ger ofta ojämna resultat. Vi är specialiserade på tatueringsmarknaden — vi vet vad som fungerar, kör det konsekvent och rapporterar resultaten. Ni betalar för en hel marknadsföringsavdelning till en bråkdel av kostnaden."
+    a: "Att göra det själv tar tid och ger ofta ojämna resultat. Vi är specialiserade på tatueringsbranschen och vet vad som fungerar — ni får en hel marknadsföringsavdelning till en bråkdel av kostnaden."
   },
   {
     q: "Hur ser vår studio-sida ut?",
@@ -36,11 +36,15 @@ const FAQ_ITEMS = [
   }
 ];
 
-function FaqItem({ q, a }) {
+function FaqItem({ q, a, revealDelay }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className={`faq-item${open ? " faq-item--open" : ""}`}>
+    <div
+      className={`faq-item${open ? " faq-item--open" : ""}`}
+      data-reveal="up"
+      data-reveal-delay={revealDelay || undefined}
+    >
       <button
         className="faq-item__q"
         aria-expanded={open}
@@ -49,7 +53,9 @@ function FaqItem({ q, a }) {
         {q}
         <span className="faq-item__icon" aria-hidden="true">+</span>
       </button>
-      <div className="faq-item__a">{a}</div>
+      <div className="faq-item__a">
+        <div className="faq-item__a-inner">{a}</div>
+      </div>
     </div>
   );
 }
@@ -59,9 +65,9 @@ export function HomePage() {
   const [loadingStudios, setLoadingStudios] = useState(true);
 
   usePageMetadata({
-    title: buildPageTitle("Fler bokningar för din tatueringsstudio"),
+    title: buildPageTitle("Fler kunder till din tatueringsstudio"),
     description:
-      "Ink Revenue är en managed service för tatueringsstudior — vi sköter er digitala närvaro, annonser och kundflöde. Ni fokuserar på konsten. Vi fyller kalendern.",
+      "Ink Revenue tar hand om hela er marknadsföring — annonser, innehåll och kundförfrågningar från start till slut. Ni fokuserar på konsten. Vi fyller kalendern.",
     path: "/"
   });
 
@@ -96,9 +102,8 @@ export function HomePage() {
 
           <h1>Fler bokningar. Mindre admin.<br />Vi sköter marknadsföringen åt er.</h1>
           <p className="lead">
-            Ink Revenue är en <strong>managed service</strong> för tatueringsstudior — vi sköter er
-            digitala närvaro, annonser och kundflöde från start till slut. Ni fokuserar på konsten.
-            Vi fyller kalendern.
+            Ink Revenue tar hand om <strong>hela er marknadsföring</strong> — annonser, innehåll
+            och kundförfrågningar från start till slut. Ni fokuserar på konsten. Vi fyller kalendern.
           </p>
 
           <div className="cta-row">
@@ -108,14 +113,14 @@ export function HomePage() {
                 <path d="M4 10h12M10 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </SiteLink>
-            <SiteLink className="btn btn-secondary btn-secondary--hero" href="/studios">
-              <span>Hitta tatueringsstudio</span>
+            <SiteLink className="btn btn-secondary btn-secondary--hero" href="/testa-gratis">
+              <span>Testa gratis i 14 dagar</span>
               <svg className="btn__icon" viewBox="0 0 20 20" aria-hidden="true">
                 <path d="M4 10h12M10 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </SiteLink>
           </div>
-          <p className="cta-note">Gratis samtal — ingen bindning, inga dolda avgifter</p>
+          <p className="cta-note">Ingen bindning, inga dolda avgifter — testa själv eller låt oss sköta allt</p>
 
           <div className="audience-grid">
             <article className="audience-card audience-card--studio">
@@ -143,7 +148,7 @@ export function HomePage() {
       {/* ── Så här fungerar det ── */}
       <section className="section section--white" id="sa-funkar-det">
         <div className="container">
-          <div style={{ textAlign: "center", maxWidth: 620, margin: "0 auto 52px" }}>
+          <div data-reveal="up" style={{ textAlign: "center", maxWidth: 620, margin: "0 auto 52px" }}>
             <p className="eyebrow">För Studioägare</p>
             <h2>Så här fungerar Ink Revenue</h2>
             <p className="body" style={{ fontSize: "1.05rem" }}>
@@ -151,21 +156,21 @@ export function HomePage() {
             </p>
           </div>
 
-          <div className="steps">
-            <div className="step">
+          <div className="steps" data-reveal="fade">
+            <div className="step" data-reveal="up" data-reveal-delay="1">
               <div className="step__number">1</div>
               <h3>Boka ett strategisamtal</h3>
               <p>Vi lär känna er studio, era mål och vilken typ av kunder ni vill nå. Samtalet är gratis och utan förpliktelser.</p>
             </div>
-            <div className="step">
+            <div className="step" data-reveal="up" data-reveal-delay="2">
               <div className="step__number">2</div>
               <h3>Vi sätter upp allt åt er</h3>
               <p>Vi bygger er studio-sida, optimerar er profil och startar rätt marknadsföringskanaler. Ni godkänner — vi kör.</p>
             </div>
-            <div className="step">
+            <div className="step" data-reveal="up" data-reveal-delay="3">
               <div className="step__number">3</div>
               <h3>Förfrågningarna börjar komma in</h3>
-              <p>Ni loggar in i er dashboard och ser bokningar, leads och statistik. Vi sköter uppföljningen — ni tatuerar.</p>
+              <p>Ni loggar in och ser förfrågningar, bokningar och statistik samlat på ett ställe. Vi sköter uppföljningen — ni tatuerar.</p>
             </div>
           </div>
         </div>
@@ -175,36 +180,35 @@ export function HomePage() {
       <section className="section section--lavender" id="for-studios">
         <div className="container">
           <div className="grid-2">
-            <div>
+            <div data-reveal="left">
               <p className="eyebrow">För Studioägare</p>
               <h2>Ni sköter tatueringarna. Vi sköter resten.</h2>
               <p className="body" style={{ fontSize: "1.05rem" }}>
-                De flesta studios förlorar potentiella kunder för att de syns dåligt, svarar långsamt
-                eller saknar en tydlig digital närvaro. Vi löser det åt er — utan att ni behöver lära
-                er ett enda marknadsföringsverktyg.
+                De flesta studios tappar kunder för att de syns dåligt eller svarar för långsamt.
+                Vi löser det åt er — ni behöver inte lära er ett enda marknadsföringsverktyg.
               </p>
               <p className="body">
-                Med Ink Revenue får ni en professionell studio-sida, en tydlig väg från sociala medier
-                och annonser till bokade kunder, och en admin som faktiskt följer upp.
+                Ni får en studio-sida som säljer, annonser som leder till bokade kunder och en
+                person som faktiskt följer upp varje förfrågan.
               </p>
               <div className="badge-row" style={{ marginTop: 18 }}>
                 <span className="badge">✓ Ni sköter inga annonser</span>
-                <span className="badge">✓ Ni skriver ingen copy</span>
+                <span className="badge">✓ Ni skriver inga texter</span>
                 <span className="badge">✓ Vi hanterar inkorgen</span>
               </div>
             </div>
 
             <div className="card-grid card-grid--single" style={{ gap: 16 }}>
-              <div className="card">
+              <div className="card" data-reveal="right" data-reveal-delay="1">
                 <div className="card__icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="28" height="28" aria-hidden="true">
                     <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
                   </svg>
                 </div>
                 <h3>Syns där kunderna letar</h3>
-                <p>Vi optimerar er närvaro på Google, sociala medier och Ink Revenue-plattformen — så rätt kunder hittar er naturligt.</p>
+                <p>Vi ser till att ni syns på Google, i sociala medier och i vår studio-katalog — där kunderna redan letar.</p>
               </div>
-              <div className="card">
+              <div className="card" data-reveal="right" data-reveal-delay="2">
                 <div className="card__icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="28" height="28" aria-hidden="true">
                     <rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" />
@@ -213,7 +217,7 @@ export function HomePage() {
                 <h3>En studio-sida som säljer er</h3>
                 <p>Er sida lyfter stil, galleri och känsla — så att rätt kunder känner igen sig direkt och väljer just er.</p>
               </div>
-              <div className="card">
+              <div className="card" data-reveal="right" data-reveal-delay="3">
                 <div className="card__icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="28" height="28" aria-hidden="true">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
@@ -221,7 +225,7 @@ export function HomePage() {
                   </svg>
                 </div>
                 <h3>Bättre förfrågningar från start</h3>
-                <p>Kunder beskriver idé, placering och budget i förväg — ni slipper massa fram-och-tillbaka och kan svara med ett direkt prisförslag.</p>
+                <p>Kunder beskriver idé, placering och budget i förväg — ni slipper fram-och-tillbaka och kan svara med ett prisförslag direkt.</p>
               </div>
             </div>
           </div>
@@ -232,7 +236,7 @@ export function HomePage() {
       {/* ── För kunder ── */}
       <section className="section section--white" id="for-customers">
         <div className="container">
-          <div className="section-heading">
+          <div className="section-heading" data-reveal="up">
             <div>
               <p className="eyebrow">För Tatueringskunder</p>
               <h2>Hitta studios efter din stil — inte efter hashtags</h2>
@@ -250,12 +254,12 @@ export function HomePage() {
             <div className="loading-state">Laddar studios...</div>
           ) : featuredStudios.length ? (
             <div className="studio-grid">
-              {featuredStudios.map((studio) => (
-                <PublicStudioCard key={studio.id} studio={studio} compact />
+              {featuredStudios.map((studio, index) => (
+                <PublicStudioCard key={studio.id} studio={studio} compact revealDelay={index + 1} />
               ))}
             </div>
           ) : (
-            <div className="empty-panel">
+            <div className="empty-panel" data-reveal="up">
               <h3>Fler studios kommer snart</h3>
               <p>Vi fyller på katalogen löpande. Kom tillbaka snart för att upptäcka fler studios och tatuerare.</p>
             </div>
@@ -266,14 +270,14 @@ export function HomePage() {
       {/* ── Varför Ink Revenue fungerar ── */}
       <section className="section section--blue">
         <div className="container" style={{ position: "relative", zIndex: 1 }}>
-          <div className="section-title">
+          <div className="section-title" data-reveal="fade">
             <div className="line" />
             <h2>Varför Ink Revenue Fungerar</h2>
             <div className="line" />
           </div>
 
           <div className="card-grid">
-            <div className="card">
+            <div className="card" data-reveal="up" data-reveal-delay="1">
               <div className="card__icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="28" height="28" aria-hidden="true">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -283,7 +287,7 @@ export function HomePage() {
               <p>Ni betalar för resultat, inte för att lära er verktyg. Vi är er marknadsföringsavdelning — ni behöver inte lyfta ett finger.</p>
             </div>
 
-            <div className="card">
+            <div className="card" data-reveal="up" data-reveal-delay="2">
               <div className="card__icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="28" height="28" aria-hidden="true">
                   <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
@@ -293,7 +297,7 @@ export function HomePage() {
               <p>Kunder ser stil, plats och galleri tydligt — de hör av sig för att de redan har valt er, inte för att chansa.</p>
             </div>
 
-            <div className="card">
+            <div className="card" data-reveal="up" data-reveal-delay="3">
               <div className="card__icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="28" height="28" aria-hidden="true">
                   <line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
@@ -304,7 +308,7 @@ export function HomePage() {
             </div>
           </div>
 
-          <div className="trust-bar">
+          <div className="trust-bar" data-reveal="up">
             <div className="trust-item">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg>
               Ingen bindningstid
@@ -328,7 +332,7 @@ export function HomePage() {
       {/* ── Planer ── */}
       <section className="section section--white" id="planer">
         <div className="container">
-          <div style={{ textAlign: "center", maxWidth: 620, margin: "0 auto 52px" }}>
+          <div data-reveal="up" style={{ textAlign: "center", maxWidth: 620, margin: "0 auto 52px" }}>
             <p className="eyebrow">Upplägg &amp; Priser</p>
             <h2>Välj det som passar er</h2>
             <p className="body" style={{ fontSize: "1.05rem" }}>
@@ -337,29 +341,35 @@ export function HomePage() {
           </div>
 
           <div className="card-grid card-grid--4">
-            <div className="card">
+            <div className="card" data-reveal="up" data-reveal-delay="1">
               <h3>Hemsidebygge</h3>
               <p className="card__price-model">Engångskostnad</p>
-              <p>Vi bygger er studio-sida från grunden — professionell, optimerad och redo att ta emot kunder.</p>
+              <p>Vi bygger er en egen hemsida från grunden — professionell, mobilanpassad och redo att ta emot kunder.</p>
             </div>
-            <div className="card">
+            <div className="card" data-reveal="up" data-reveal-delay="2">
               <h3>Marknadsföringsplan</h3>
               <p className="card__price-model">% per inkommen kund</p>
               <p>Vi kör er marknadsföring på sociala medier och annonser. Ni betalar en andel per kund vi genererar — ingen fast månadsavgift.</p>
             </div>
-            <div className="card">
+            <div className="card" data-reveal="up" data-reveal-delay="3">
               <h3>Bokningsplan</h3>
               <p className="card__price-model">Månadsabonnemang</p>
-              <p>Fast månadsavgift utan bindningstid. Inkluderar er studio-sida i katalogen, bokningsformulär och CRM-dashboard.</p>
+              <p>Fast månadsavgift utan bindningstid. Ni får er studio-sida i katalogen, bokningsformulär och egen inloggning med full översikt.</p>
+              <SiteLink className="card__link" href="/testa-gratis">
+                Testa gratis i 14 dagar
+                <svg className="btn__icon" viewBox="0 0 20 20" aria-hidden="true">
+                  <path d="M4 10h12M10 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </SiteLink>
             </div>
-            <div className="card card--featured">
+            <div className="card card--featured" data-reveal="up" data-reveal-delay="4">
               <h3>Kombipaket</h3>
               <p className="card__price-model">% per inkommen kund</p>
-              <p>Allt i ett — marknadsföring, studio-sida och bokningshantering. Ni betalar per kund vi levererar. Det kompletta upplägget.</p>
+              <p>Allt i ett — marknadsföring, studio-sida och bokningshantering. Ni betalar per kund vi levererar.</p>
             </div>
           </div>
 
-          <div style={{ textAlign: "center", marginTop: 40 }}>
+          <div data-reveal="up" style={{ textAlign: "center", marginTop: 40 }}>
             <SiteLink className="btn btn-primary" href="#bokning">
               Boka gratis strategisamtal — vi går igenom priserna
               <svg className="btn__icon" viewBox="0 0 20 20" aria-hidden="true">
@@ -373,14 +383,14 @@ export function HomePage() {
       {/* ── FAQ ── */}
       <section className="section section--lavender" id="faq">
         <div className="container">
-          <div style={{ textAlign: "center", maxWidth: 560, margin: "0 auto 44px" }}>
+          <div data-reveal="up" style={{ textAlign: "center", maxWidth: 560, margin: "0 auto 44px" }}>
             <p className="eyebrow">Vanliga frågor</p>
             <h2>Svar på det ni undrar</h2>
           </div>
 
           <div className="faq" style={{ maxWidth: 760, margin: "0 auto" }}>
-            {FAQ_ITEMS.map((item) => (
-              <FaqItem key={item.q} q={item.q} a={item.a} />
+            {FAQ_ITEMS.map((item, index) => (
+              <FaqItem key={item.q} q={item.q} a={item.a} revealDelay={Math.min(index, 5)} />
             ))}
           </div>
         </div>
@@ -389,7 +399,7 @@ export function HomePage() {
       {/* ── Bokningsformulär ── */}
       <section className="section section--lavender" id="bokning">
         <div className="container booking">
-          <div>
+          <div data-reveal="left">
             <p className="eyebrow">För Studioägare</p>
             <h2>Redo att få fler bokningar?</h2>
             <p className="body" style={{ fontSize: "1.05rem" }}>

@@ -40,7 +40,7 @@ export function StudiosDirectoryPage() {
     if (filters.city) {
       return `Tatueringsstudios i ${filters.city}. Filtrera på stil, se galleri och skicka förfrågan direkt via Ink Revenue.`;
     }
-    return "Utforska tatueringsstudios i Sverige efter stil, stad och uttryck. Filtrera fram en studio som passar din idé och skicka din förfrågan direkt.";
+    return "Utforska tatueringsstudios i Sverige efter stil, stad och känsla. Filtrera fram en studio som passar din idé och skicka din förfrågan direkt.";
   }, [filters.city, filters.style]);
 
   const metaPath = useMemo(() => {
@@ -192,15 +192,15 @@ export function StudiosDirectoryPage() {
           </h1>
           <p className="lead lead--dark">
             {filters.style || filters.city
-              ? "Filtrera vidare efter plats, stil och uttryck — skicka din förfrågan direkt."
-              : "Filtrera efter plats, stil och uttryck för att hitta en studio som passar din idé."}
+              ? "Filtrera vidare efter stil, stad och känsla — skicka din förfrågan direkt."
+              : "Filtrera efter stil, stad och känsla för att hitta en studio som passar din idé."}
           </p>
         </div>
       </section>
 
       <section className="section section--white">
         <div className="container">
-          <div className="filters-panel">
+          <div className="filters-panel" data-reveal="up">
             <label>
               Sök
               <input
@@ -251,11 +251,12 @@ export function StudiosDirectoryPage() {
                 <h2>{filteredStudios.length} studios matchar din filtrering</h2>
               </div>
               <div className="studio-grid">
-                {filteredStudios.map((studio) => (
+                {filteredStudios.map((studio, index) => (
                   <PublicStudioCard
                     key={studio.id}
                     studio={studio}
                     cardTheme={studioRegistry[studio.slug]?.cardTheme ?? null}
+                    revealDelay={(index % 3) + 1}
                   />
                 ))}
               </div>
@@ -268,7 +269,7 @@ export function StudiosDirectoryPage() {
           )}
 
           {!loading && (filters.city || filters.style) ? (
-            <div className="seo-landing-text">
+            <div className="seo-landing-text" data-reveal="up">
               <h2>
                 {filters.style && filters.city
                   ? `${filters.style}-tatueringar i ${filters.city}`
@@ -317,7 +318,7 @@ export function StudiosDirectoryPage() {
           ) : null}
 
           {!loading && !filters.city && !filters.style && !filters.search && cities.length > 0 ? (
-            <div className="seo-landing-text">
+            <div className="seo-landing-text" data-reveal="up">
               <h2>Utforska tatueringar efter stad och stil</h2>
               <p>Ink Revenue samlar tatueringsstudios från hela Sverige. Välj stad eller stil för att hitta rätt studio för din idé.</p>
               <div className="seo-landing-links">

@@ -3,6 +3,7 @@ import { SiteLink } from "../utils/siteRouter";
 
 export function SiteHeader({ currentPath }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const navRef = useRef(null);
   const strategyHref = currentPath === "/" ? "#bokning" : "/#bokning";
   const isStudiosSection =
@@ -13,6 +14,16 @@ export function SiteHeader({ currentPath }) {
   useEffect(() => {
     setMenuOpen(false);
   }, [currentPath]);
+
+  // Deepen the header surface once the page is scrolled
+  useEffect(() => {
+    function handleScroll() {
+      setScrolled(window.scrollY > 12);
+    }
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Close menu on outside click
   useEffect(() => {
@@ -33,7 +44,7 @@ export function SiteHeader({ currentPath }) {
   }, [menuOpen]);
 
   return (
-    <header className="site-header" ref={navRef}>
+    <header className={`site-header${scrolled ? " site-header--scrolled" : ""}`} ref={navRef}>
       <div className="container site-header__inner">
         <SiteLink className="site-brand" href="/">
           <img src="/ink-revenue-logo.svg" alt="Ink Revenue logotyp" />
