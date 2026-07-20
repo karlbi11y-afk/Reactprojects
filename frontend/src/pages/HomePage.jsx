@@ -114,13 +114,13 @@ export function HomePage() {
               </svg>
             </SiteLink>
             <SiteLink className="btn btn-secondary btn-secondary--hero" href="/testa-gratis">
-              <span>Testa gratis i 14 dagar</span>
+              <span>Testa gratis i 30 dagar</span>
               <svg className="btn__icon" viewBox="0 0 20 20" aria-hidden="true">
                 <path d="M4 10h12M10 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </SiteLink>
           </div>
-          <p className="cta-note">Ingen bindning, inga dolda avgifter — testa själv eller låt oss sköta allt</p>
+          <p className="cta-note">Ingen bindning, inga dolda avgifter — testa själv utan betalkort eller låt oss sköta allt</p>
 
           <div className="audience-grid">
             <article className="audience-card audience-card--studio">
@@ -354,9 +354,9 @@ export function HomePage() {
             <div className="card" data-reveal="up" data-reveal-delay="3">
               <h3>Bokningsplan</h3>
               <p className="card__price-model">Månadsabonnemang</p>
-              <p>Fast månadsavgift utan bindningstid. Ni får er studio-sida i katalogen, bokningsformulär och egen inloggning med full översikt.</p>
+              <p>Fast månadsavgift utan bindningstid. Ni får er studio-sida i katalogen, bokningsformulär och egen inloggning med full översikt. Testa 30 dagar först — inget betalkort.</p>
               <SiteLink className="card__link" href="/testa-gratis">
-                Testa gratis i 14 dagar
+                Testa gratis i 30 dagar
                 <svg className="btn__icon" viewBox="0 0 20 20" aria-hidden="true">
                   <path d="M4 10h12M10 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>

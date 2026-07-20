@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { buildPageTitle, usePageMetadata } from "../utils/pageMetadata";
 import { SiteLink } from "../utils/siteRouter";
 
-// ?plan=trial förväljer 14-dagars gratisperioden på CRM:ets registersida.
+// ?plan=trial förväljer 30-dagars gratisperioden på CRM:ets registersida.
 const REGISTER_URL = "https://inkrevenue-crm.online/register";
 const FORWARDED_UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"];
 
@@ -38,9 +38,9 @@ export function TrialPage() {
   const registerHref = useRegisterHref();
 
   usePageMetadata({
-    title: buildPageTitle("Testa gratis i 14 dagar"),
+    title: buildPageTitle("Testa gratis i 30 dagar"),
     description:
-      "Skapa ett konto och testa Ink Revenue gratis i 14 dagar — egen studio-sida, smartare bokningsförfrågningar och allt samlat på ett ställe. Ingen bindningstid.",
+      "Skapa ett konto och testa Ink Revenue gratis i 30 dagar — utan betalkort. Egen studio-sida, smartare bokningsförfrågningar och allt samlat på ett ställe. Ingen bindningstid.",
     path: "/testa-gratis"
   });
 
@@ -57,7 +57,7 @@ export function TrialPage() {
           </div>
 
           <p className="eyebrow eyebrow--light">För tatueringsstudior &amp; artister</p>
-          <h1>Testa gratis i 14 dagar</h1>
+          <h1>Testa gratis i 30 dagar</h1>
           <p className="lead">
             Er egen studio-sida, bokningsförfrågningar med idé, placering och budget redan ifyllt —
             och allt samlat i en egen inloggning. Skapa kontot på några minuter.
@@ -69,11 +69,11 @@ export function TrialPage() {
               <ArrowIcon />
             </a>
           </div>
-          <p className="cta-note">14 dagar gratis — ingen bindningstid, avsluta när ni vill</p>
+          <p className="cta-note">30 dagar gratis — inget betalkort, ingen bindningstid, avsluta när ni vill</p>
 
           <div className="badge-row badge-row--light">
+            <span className="badge">✓ Inget betalkort behövs</span>
             <span className="badge">✓ Klart på några minuter</span>
-            <span className="badge">✓ Ingen bindningstid</span>
             <span className="badge">✓ Ni äger alltid er data</span>
           </div>
         </div>
@@ -134,7 +134,7 @@ export function TrialPage() {
             <div className="step" data-reveal="up" data-reveal-delay="1">
               <div className="step__number">1</div>
               <h3>Skapa ert konto</h3>
-              <p>Registrera studion på ett par minuter. Inga säljsamtal — ni testar i er egen takt.</p>
+              <p>Registrera studion på ett par minuter. Inget betalkort, inga säljsamtal — ni testar i er egen takt.</p>
             </div>
             <div className="step" data-reveal="up" data-reveal-delay="2">
               <div className="step__number">2</div>
@@ -161,12 +161,14 @@ export function TrialPage() {
 
           <div data-reveal="up" style={{ textAlign: "center", maxWidth: 560, margin: "0 auto" }}>
             <p className="body" style={{ fontSize: "1.05rem" }}>
-              14 dagar räcker gott och väl för att sätta upp er sida och känna på flödet.
-              Gillar ni det inte kostar det er ingenting.
+              30 dagar räcker gott och väl för att sätta upp er sida och känna på flödet.
+              Ni lägger aldrig in något betalkort, och perioden övergår inte automatiskt i ett
+              abonnemang — vill ni fortsätta väljer ni upplägg själva. Gillar ni det inte kostar
+              det er ingenting.
             </p>
             <div className="cta-row" style={{ marginTop: 28 }}>
               <a className="btn btn-primary" href={registerHref}>
-                Testa gratis i 14 dagar
+                Testa gratis i 30 dagar
                 <ArrowIcon />
               </a>
             </div>
@@ -175,7 +177,11 @@ export function TrialPage() {
           <div className="trust-bar" data-reveal="up">
             <div className="trust-item">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg>
-              14 dagar gratis
+              30 dagar gratis
+            </div>
+            <div className="trust-item">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg>
+              Inget betalkort
             </div>
             <div className="trust-item">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg>
