@@ -3,7 +3,7 @@ import { SiteLink } from "../utils/siteRouter";
 const FOOTER_CITIES = ["Stockholm", "Göteborg", "Malmö", "Uppsala"];
 const FOOTER_STYLES = ["Fineline", "Blackwork", "Traditionell", "Realism", "Dotwork"];
 
-export function SiteFooter({ onOpenLegalModal }) {
+export function SiteFooter() {
   return (
     <footer className="footer">
       <div className="container footer__content" data-reveal="fade">
@@ -21,9 +21,10 @@ export function SiteFooter({ onOpenLegalModal }) {
           <SiteLink href="/studios">Studios</SiteLink>
           <SiteLink href="/faq">FAQ</SiteLink>
           <SiteLink href="/#bokning">Boka strategisamtal</SiteLink>
-          <button className="footer__link-button" type="button" onClick={onOpenLegalModal}>
-            Integritet & villkor
-          </button>
+          {/* Riktiga länkar, inte modal — Googles OAuth-granskare måste hitta
+              integritetspolicyn från startsidan och kunna öppna den på sin URL. */}
+          <SiteLink href="/integritetspolicy">Integritetspolicy</SiteLink>
+          <SiteLink href="/anvandarvillkor">Användarvillkor</SiteLink>
         </div>
 
         <nav className="footer__discovery" aria-label="Utforska tatueringar">

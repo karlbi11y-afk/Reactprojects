@@ -22,6 +22,8 @@ const ROUTES = [
   "/studios",
   "/faq",
   "/testa-gratis",
+  "/integritetspolicy",
+  "/anvandarvillkor",
   "/studio/royalkave",
 ];
 

@@ -1,9 +1,10 @@
-import { LegalConsentProvider, useLegalConsent } from "./contexts/LegalConsentContext";
+import { LegalConsentProvider } from "./contexts/LegalConsentContext";
 import { SiteFooter } from "./components/SiteFooter";
 import { SiteHeader } from "./components/SiteHeader";
 import { createDemoStudioPreview } from "./data/demoStudio";
 import { FaqPage } from "./pages/FaqPage";
 import { HomePage } from "./pages/HomePage";
+import { LegalPage } from "./pages/LegalPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { StudioCrmPreviewPage } from "./pages/StudioCrmPreviewPage";
 import { StudioProfilePage } from "./pages/StudioProfilePage";
@@ -43,6 +44,22 @@ function getPageFromPath(pathname) {
       currentPath: pathname,
       element: <TrialPage />,
       hideHeader: true
+    };
+  }
+
+  // Egna rutter, inte bara modalen: Googles OAuth-verifiering kräver att
+  // integritetspolicyn går att öppna direkt på sin URL.
+  if (pathname === "/integritetspolicy") {
+    return {
+      currentPath: pathname,
+      element: <LegalPage document="privacy" />
+    };
+  }
+
+  if (pathname === "/anvandarvillkor") {
+    return {
+      currentPath: pathname,
+      element: <LegalPage document="terms" />
     };
   }
 
@@ -91,7 +108,6 @@ function getPageFromPath(pathname) {
 function AppContent() {
   const location = useSiteLocation();
   const page = getPageFromPath(location.pathname);
-  const { openLegalModal } = useLegalConsent();
 
   useScrollReveal();
 
@@ -99,7 +115,7 @@ function AppContent() {
     <div>
       {!page.hideHeader && <SiteHeader currentPath={page.currentPath} />}
       <main>{page.element}</main>
-      <SiteFooter onOpenLegalModal={openLegalModal} />
+      <SiteFooter />
     </div>
   );
 }

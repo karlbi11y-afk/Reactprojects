@@ -1,28 +1,8 @@
-const DOCUMENT_CONTENT = {
-  privacy: {
-    eyebrow: "Integritetspolicy",
-    title: "Så använder vi dina uppgifter",
-    sections: [
-      "När du fyller i namn, mejl, telefon eller bokningsdetaljer får vi spara uppgifterna för att hantera din förfrågan och hjälpa dig vidare till rätt studio eller strategisamtal.",
-      "Om du börjar fylla i ett formulär men inte skickar in det kan vi spara utkastet och skicka påminnelser via mejl eller sms under veckan, så att du enkelt kan fortsätta där du slutade.",
-      "Vi använder också teknisk information som sida, referenslänk och kampanjdata för att förstå var förfrågningar kommer ifrån och förbättra tjänsten.",
-      "Om du vill att uppgifter ska rättas eller tas bort kan du kontakta oss på info@inkrevenue.online."
-    ]
-  },
-  terms: {
-    eyebrow: "Användarvillkor",
-    title: "Villkor för att använda Ink Revenue",
-    sections: [
-      "Tjänsten används för att skicka bokningsförfrågningar, hitta studios och boka strategisamtal. Uppgifter du lämnar ska vara korrekta och relevanta för din förfrågan.",
-      "Ink Revenue och anslutna studios får använda uppgifterna för att kontakta dig om din bokning, följa upp ett påbörjat formulär och ge återkoppling på din förfrågan.",
-      "Genom att använda formulären godkänner du att vi sparar det som behövs för att kunna leverera tjänsten och följa upp din kontakt.",
-      "Om du inte längre vill bli kontaktad kan du meddela oss eller den studio du varit i kontakt med."
-    ]
-  }
-};
+import { LEGAL_DOCUMENTS } from "../data/legalContent";
+import { SiteLink } from "../utils/siteRouter";
 
 export function LegalDocumentModal({ activeDocument, onClose }) {
-  const content = DOCUMENT_CONTENT[activeDocument];
+  const content = LEGAL_DOCUMENTS[activeDocument];
 
   if (!content) {
     return null;
@@ -53,9 +33,20 @@ export function LegalDocumentModal({ activeDocument, onClose }) {
         </div>
 
         <div className="legal-document__content">
-          {content.sections.map((section) => (
-            <p key={section}>{section}</p>
+          {content.groups.map((group) => (
+            <section key={group.heading}>
+              <h3>{group.heading}</h3>
+              {group.paragraphs.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+            </section>
           ))}
+
+          <p>
+            <SiteLink href={content.path} onClick={onClose}>
+              Öppna som egen sida
+            </SiteLink>
+          </p>
         </div>
       </section>
     </div>
