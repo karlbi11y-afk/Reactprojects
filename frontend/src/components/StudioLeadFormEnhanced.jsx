@@ -18,6 +18,7 @@ const WEEKDAY_LABELS = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
 // Sentinelvärde för "Annat" i stil-dropdownen. Väljs det byter formuläret till
 // konsultation eftersom studion inte har en tidsberäkning för stilen.
 const OTHER_STYLE_VALUE = "__other__";
+const OTHER_PLACEMENT_VALUE = "__other_placement__";
 
 // Reservlista om studion saknar konfigurerade modifierare/stilar, så att
 // dropdownen aldrig blir tom.
@@ -58,6 +59,27 @@ function buildStyleOptions(studio) {
   if (fromStyles.length > 0) return fromStyles;
 
   return FALLBACK_STYLE_OPTIONS;
+}
+
+// Placeringar studion valt i sina bokningsregler. Saknas de får kunden skriva
+// fritt som förut — ingen studio ska tvingas fylla i listan för att formuläret
+// ska funka.
+function buildPlacementOptions(studio) {
+  const options = Array.isArray(studio?.placementOptions)
+    ? studio.placementOptions
+        .map((option) => {
+          if (typeof option === "string") {
+            const value = option.trim();
+            return value ? { label: value, value } : null;
+          }
+          const value = String(option?.value || option?.label || "").trim();
+          const label = String(option?.label || value).trim();
+          return value ? { label: label || value, value } : null;
+        })
+        .filter(Boolean)
+    : [];
+
+  return options.length ? options : null;
 }
 
 const baseForm = {
@@ -421,6 +443,36 @@ export function StudioLeadFormEnhanced({
     ],
     [styleOptions]
   );
+
+  // Placeringar: dropdown när studion listat sina, annars fritext. "Annat" byter
+  // till fritext utan att växla bokningstyp — placeringen påverkar bara ett
+  // eventuellt tidspåslag, inte om tiden går att beräkna.
+  const placementOptions = useMemo(() => buildPlacementOptions(studio), [studio]);
+  const [showCustomPlacement, setShowCustomPlacement] = useState(false);
+  const placementSelectOptions = useMemo(
+    () =>
+      placementOptions
+        ? [
+            ...placementOptions.map((option) => ({
+              label: option.label,
+              value: option.value
+            })),
+            { label: "Annat (skriv själv)", value: OTHER_PLACEMENT_VALUE, isOther: true }
+          ]
+        : [],
+    [placementOptions]
+  );
+
+  function handlePlacementChange(event) {
+    const { value } = event.target;
+    if (value === OTHER_PLACEMENT_VALUE) {
+      setShowCustomPlacement(true);
+      setFormData((current) => ({ ...current, placement: "" }));
+      return;
+    }
+    setShowCustomPlacement(false);
+    setFormData((current) => ({ ...current, placement: value }));
+  }
 
   // Stripe Connect state
   const [stripePromise, setStripePromise] = useState(null);
@@ -938,7 +990,21 @@ export function StudioLeadFormEnhanced({
             <p className="booking-type-note" role="status">
               Stilen du sökte finns inte bland studions valbara stilar, så vi har
               växlat till en konsultation. Beskriv vad du vill ha så återkommer
-              studion med ett förslag.
+              studion med ett förslag.{" "}
+              <button
+                type="button"
+                className="field-inline-action"
+                onClick={() => {
+                  setStyleFellBackToConsultation(false);
+                  setFormData((current) => ({
+                    ...current,
+                    bookingType: "tattoo_session",
+                    tattooStyle: ""
+                  }));
+                }}
+              >
+                Tillbaka till stilarna
+              </button>
             </p>
           )}
 
@@ -970,16 +1036,45 @@ export function StudioLeadFormEnhanced({
               className={getFieldError("placement") ? "has-error" : ""}
             >
               Placering <span className="field-required">*</span>
-              <input
-                id="lead-placement"
-                type="text"
-                name="placement"
-                placeholder="Arm, rygg, ben..."
-                value={formData.placement}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                aria-invalid={!!getFieldError("placement")}
-              />
+              {placementSelectOptions.length && !showCustomPlacement ? (
+                <CustomSelect
+                  id="lead-placement"
+                  name="placement"
+                  value={formData.placement}
+                  onChange={handlePlacementChange}
+                  onBlur={handleBlur}
+                  options={placementSelectOptions}
+                  placeholder="Välj placering..."
+                  ariaInvalid={!!getFieldError("placement")}
+                  nativeClassName="booking-form"
+                />
+              ) : (
+                <>
+                  <input
+                    id="lead-placement"
+                    type="text"
+                    name="placement"
+                    placeholder="Arm, rygg, ben..."
+                    value={formData.placement}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    aria-invalid={!!getFieldError("placement")}
+                    autoFocus={showCustomPlacement}
+                  />
+                  {showCustomPlacement ? (
+                    <button
+                      type="button"
+                      className="field-inline-action"
+                      onClick={() => {
+                        setShowCustomPlacement(false);
+                        setFormData((current) => ({ ...current, placement: "" }));
+                      }}
+                    >
+                      Välj från listan i stället
+                    </button>
+                  ) : null}
+                </>
+              )}
               {getFieldError("placement") ? (
                 <span className="field-error" role="alert">{getFieldError("placement")}</span>
               ) : null}
