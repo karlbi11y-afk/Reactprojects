@@ -4,6 +4,7 @@ import { SiteLink } from "../utils/siteRouter";
 import { getPublicStudioBySlug, getPublicStudios } from "../services/publicSiteApi";
 import { StudioLeadFormEnhanced } from "../components/StudioLeadFormEnhanced";
 import { PublicStudioCard } from "../components/PublicStudioCard";
+import { RollingGallery } from "../components/RollingGallery";
 import { getStudioTags } from "../utils/studioTags";
 import { studioRegistry } from "./studios";
 
@@ -480,13 +481,7 @@ export function StudioProfilePage({ slug = "", studioOverride = null, previewMod
               </div>
             </div>
 
-            <div className="gallery-grid">
-              {galleryImages.map((imageUrl) => (
-                <a key={imageUrl} href={imageUrl} target="_blank" rel="noreferrer">
-                  <img src={imageUrl} alt={`${studio.name} galleri`} />
-                </a>
-              ))}
-            </div>
+            <RollingGallery images={galleryImages} studioName={studio.name} />
           </div>
         </section>
       ) : null}
