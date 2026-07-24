@@ -1,9 +1,13 @@
 import { SiteLink } from "../utils/siteRouter";
+import { useT } from "../i18n/LanguageContext";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 const FOOTER_CITIES = ["Stockholm", "Göteborg", "Malmö", "Uppsala"];
 const FOOTER_STYLES = ["Fineline", "Blackwork", "Traditionell", "Realism", "Dotwork"];
 
 export function SiteFooter() {
+  const t = useT();
+
   return (
     <footer className="footer">
       <div className="container footer__content" data-reveal="fade">
@@ -11,50 +15,52 @@ export function SiteFooter() {
           <img
             className="brand-logo brand-logo--footer"
             src="/ink-revenue-logo.svg"
-            alt="Ink Revenue logotyp"
+            alt={t("common.logoAlt")}
           />
           <div className="brand-mark brand-mark--footer">Ink Revenue</div>
         </div>
 
         <div className="footer__links">
-          <SiteLink href="/">Hem</SiteLink>
-          <SiteLink href="/studios">Studios</SiteLink>
-          <SiteLink href="/faq">FAQ</SiteLink>
-          <SiteLink href="/#bokning">Boka strategisamtal</SiteLink>
+          <SiteLink href="/">{t("footer.home")}</SiteLink>
+          <SiteLink href="/studios">{t("footer.studios")}</SiteLink>
+          <SiteLink href="/faq">{t("footer.faq")}</SiteLink>
+          <SiteLink href="/#bokning">{t("footer.strategy")}</SiteLink>
           {/* Riktiga länkar, inte modal — Googles OAuth-granskare måste hitta
               integritetspolicyn från startsidan och kunna öppna den på sin URL. */}
-          <SiteLink href="/integritetspolicy">Integritetspolicy</SiteLink>
-          <SiteLink href="/anvandarvillkor">Användarvillkor</SiteLink>
+          <SiteLink href="/integritetspolicy">{t("footer.privacy")}</SiteLink>
+          <SiteLink href="/anvandarvillkor">{t("footer.terms")}</SiteLink>
         </div>
 
-        <nav className="footer__discovery" aria-label="Utforska tatueringar">
+        <nav className="footer__discovery" aria-label={t("footer.discoveryLabel")}>
           <div className="footer__discovery-col">
-            <p className="footer__discovery-heading">Städer</p>
+            <p className="footer__discovery-heading">{t("footer.cities")}</p>
             {FOOTER_CITIES.map((city) => (
               <SiteLink key={city} href={`/studios?city=${encodeURIComponent(city)}`}>
-                Tatuering i {city}
+                {t("footer.cityLink", { city })}
               </SiteLink>
             ))}
           </div>
           <div className="footer__discovery-col">
-            <p className="footer__discovery-heading">Stilar</p>
+            <p className="footer__discovery-heading">{t("footer.styles")}</p>
             {FOOTER_STYLES.map((style) => (
               <SiteLink key={style} href={`/studios?style=${encodeURIComponent(style)}`}>
-                {style}-tatuering
+                {t("footer.styleLink", { style })}
               </SiteLink>
             ))}
           </div>
         </nav>
 
         <div className="footer__contact">
-          <p>Kontakta oss:</p>
+          <p>{t("footer.contactHeading")}</p>
           <p>
-            Telefon: <a href="tel:+46732009483">+46732009483</a>
+            {t("footer.phone")} <a href="tel:+46732009483">+46732009483</a>
           </p>
           <p>
-            Mejl: <a href="mailto:info@inkrevenue.online">info@inkrevenue.online</a>
+            {t("footer.email")} <a href="mailto:info@inkrevenue.online">info@inkrevenue.online</a>
           </p>
         </div>
+
+        <LanguageSwitcher className="lang-switch--footer" />
 
         <div className="socials">
           <a
@@ -87,9 +93,9 @@ export function SiteFooter() {
           </a>
         </div>
 
-        <p className="footer__copy">Copyright 2026. Ink Revenue. All rights reserved.</p>
+        <p className="footer__copy">{t("footer.copyright")}</p>
         <p className="footer__credit">
-          Webbdesign av{" "}
+          {t("footer.credit")}{" "}
           <a href="https://webwork.se/" target="_blank" rel="noopener">
             webwork.se
           </a>

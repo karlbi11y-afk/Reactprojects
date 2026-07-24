@@ -5,8 +5,10 @@ import { getPublicStudios } from "../services/publicSiteApi";
 import { buildPageTitle, useJsonLd, usePageMetadata } from "../utils/pageMetadata";
 import { getStudioTags } from "../utils/studioTags";
 import { studioRegistry } from "./studios";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export function StudiosDirectoryPage() {
+  const { t, localizePath } = useLanguage();
   const [studios, setStudios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -24,24 +26,24 @@ export function StudiosDirectoryPage() {
   const metaTitle = useMemo(() => {
     const parts = [];
     if (filters.style) parts.push(filters.style);
-    if (filters.city) parts.push(`i ${filters.city}`);
+    if (filters.city) parts.push(t("directory.metaTitleCityPart", { city: filters.city }));
     return parts.length
-      ? buildPageTitle(`Tatueringsstudios ${parts.join(" ")}`)
-      : buildPageTitle("Hitta tatueringsstudios i Sverige");
-  }, [filters.city, filters.style]);
+      ? buildPageTitle(t("directory.metaTitleFiltered", { parts: parts.join(" ") }))
+      : buildPageTitle(t("directory.metaTitleDefault"));
+  }, [filters.city, filters.style, t]);
 
   const metaDescription = useMemo(() => {
     if (filters.style && filters.city) {
-      return `Hitta tatueringsstudios med ${filters.style} i ${filters.city}. Filtrera, se galleri och skicka din förfrågan direkt via Ink Revenue.`;
+      return t("directory.metaDescriptionBoth", { style: filters.style, city: filters.city });
     }
     if (filters.style) {
-      return `Tatueringsstudios specialiserade på ${filters.style}. Se galleri, läs om studion och skicka din förfrågan direkt.`;
+      return t("directory.metaDescriptionStyle", { style: filters.style });
     }
     if (filters.city) {
-      return `Tatueringsstudios i ${filters.city}. Filtrera på stil, se galleri och skicka förfrågan direkt via Ink Revenue.`;
+      return t("directory.metaDescriptionCity", { city: filters.city });
     }
-    return "Utforska tatueringsstudios i Sverige efter stil, stad och känsla. Filtrera fram en studio som passar din idé och skicka din förfrågan direkt.";
-  }, [filters.city, filters.style]);
+    return t("directory.metaDescriptionDefault");
+  }, [filters.city, filters.style, t]);
 
   const metaPath = useMemo(() => {
     const params = new URLSearchParams();
@@ -154,7 +156,7 @@ export function StudiosDirectoryPage() {
     return {
       "@context": "https://schema.org",
       "@type": "ItemList",
-      "name": "Tatueringsstudios på Ink Revenue",
+      "name": t("directory.jsonLdName"),
       "description": metaDescription,
       "numberOfItems": filteredStudios.length,
       "itemListElement": filteredStudios.slice(0, 50).map((studio, index) => ({
@@ -164,7 +166,7 @@ export function StudiosDirectoryPage() {
         "name": studio.name
       }))
     };
-  }, [filteredStudios, metaDescription]);
+  }, [filteredStudios, metaDescription, t]);
 
   useJsonLd(itemListJsonLd);
 
@@ -180,20 +182,20 @@ export function StudiosDirectoryPage() {
     <div>
       <section className="page-hero page-hero--directory">
         <div className="container">
-          <p className="eyebrow">Hitta Rätt Studio</p>
+          <p className="eyebrow">{t("directory.eyebrow")}</p>
           <h1>
             {filters.style && filters.city
-              ? `${filters.style}-tatueringar i ${filters.city}`
+              ? t("directory.titleBoth", { style: filters.style, city: filters.city })
               : filters.style
-              ? `Tatueringsstudios — ${filters.style}`
+              ? t("directory.titleStyle", { style: filters.style })
               : filters.city
-              ? `Tatueringsstudios i ${filters.city}`
-              : "Utforska tatueringsstudios i Sverige"}
+              ? t("directory.titleCity", { city: filters.city })
+              : t("directory.titleDefault")}
           </h1>
           <p className="lead lead--dark">
             {filters.style || filters.city
-              ? "Filtrera vidare efter stil, stad och känsla — skicka din förfrågan direkt."
-              : "Filtrera efter stil, stad och känsla för att hitta en studio som passar din idé."}
+              ? t("directory.leadFiltered")
+              : t("directory.leadDefault")}
           </p>
         </div>
       </section>
@@ -202,39 +204,39 @@ export function StudiosDirectoryPage() {
         <div className="container">
           <div className="filters-panel" data-reveal="up">
             <label>
-              Sök
+              {t("directory.searchLabel")}
               <input
                 type="text"
                 name="search"
                 value={filters.search}
                 onChange={handleFilterChange}
-                placeholder="Studio, stad eller stil"
+                placeholder={t("directory.searchPlaceholder")}
               />
             </label>
 
             <label>
-              Stad
+              {t("directory.cityLabel")}
               <CustomSelect
                 name="city"
                 value={filters.city}
                 onChange={handleFilterChange}
-                placeholder="Alla städer"
+                placeholder={t("directory.allCities")}
                 options={[
-                  { label: "Alla städer", value: "" },
+                  { label: t("directory.allCities"), value: "" },
                   ...cities.map((city) => ({ label: city, value: city }))
                 ]}
               />
             </label>
 
             <label>
-              Stil
+              {t("directory.styleLabel")}
               <CustomSelect
                 name="style"
                 value={filters.style}
                 onChange={handleFilterChange}
-                placeholder="Alla stilar"
+                placeholder={t("directory.allStyles")}
                 options={[
-                  { label: "Alla stilar", value: "" },
+                  { label: t("directory.allStyles"), value: "" },
                   ...styles.map((style) => ({ label: style, value: style }))
                 ]}
               />
@@ -244,11 +246,11 @@ export function StudiosDirectoryPage() {
           {error ? <div className="error-panel">{error}</div> : null}
 
           {loading ? (
-            <div className="loading-state">Laddar studios...</div>
+            <div className="loading-state">{t("directory.loading")}</div>
           ) : filteredStudios.length ? (
             <>
               <div className="section-heading section-heading--tight">
-                <h2>{filteredStudios.length} studios matchar din filtrering</h2>
+                <h2>{t("directory.resultsHeading", { count: filteredStudios.length })}</h2>
               </div>
               <div className="studio-grid">
                 {filteredStudios.map((studio, index) => (
@@ -263,8 +265,8 @@ export function StudiosDirectoryPage() {
             </>
           ) : (
             <div className="empty-panel">
-              <h3>Inga studios matchade filtren</h3>
-              <p>Prova att rensa sökningen eller välj en annan stil eller stad.</p>
+              <h3>{t("directory.emptyTitle")}</h3>
+              <p>{t("directory.emptyText")}</p>
             </div>
           )}
 
@@ -272,45 +274,48 @@ export function StudiosDirectoryPage() {
             <div className="seo-landing-text" data-reveal="up">
               <h2>
                 {filters.style && filters.city
-                  ? `${filters.style}-tatueringar i ${filters.city}`
+                  ? t("directory.titleBoth", { style: filters.style, city: filters.city })
                   : filters.style
-                  ? `${filters.style}-tatueringar i Sverige`
-                  : `Tatueringsstudios i ${filters.city}`}
+                  ? t("directory.seoStyleTitle", { style: filters.style })
+                  : t("directory.titleCity", { city: filters.city })}
               </h2>
               <p>
                 {filters.style && filters.city
-                  ? `Hitta de bästa ${filters.style.toLowerCase()}-tatuerarna i ${filters.city}. Skicka en förfrågan direkt till studion — beskriva din idé, stil och placering för att komma igång.`
+                  ? t("directory.seoBothText", {
+                      style: filters.style.toLowerCase(),
+                      city: filters.city
+                    })
                   : filters.style
-                  ? `Utforska tatueringsstudios specialiserade på ${filters.style.toLowerCase()} i hela Sverige. Varje studio har ett eget uttryck — filtrera vidare efter stad för att hitta rätt.`
-                  : `Bläddra bland tatueringsstudios i ${filters.city}. Jämför stilar, se galleri och skicka din förfrågan direkt till studion som passar dig bäst.`}
+                  ? t("directory.seoStyleText", { style: filters.style.toLowerCase() })
+                  : t("directory.seoCityText", { city: filters.city })}
               </p>
               <div className="seo-landing-links">
                 {filters.city && (
-                  <a href="/studios" onClick={(e) => { e.preventDefault(); setFilters({ search: "", city: "", style: "" }); }}>
-                    Visa alla städer
+                  <a href={localizePath("/studios")} onClick={(e) => { e.preventDefault(); setFilters({ search: "", city: "", style: "" }); }}>
+                    {t("directory.showAllCities")}
                   </a>
                 )}
                 {filters.style && (
-                  <a href="/studios" onClick={(e) => { e.preventDefault(); setFilters({ search: "", city: "", style: "" }); }}>
-                    Visa alla stilar
+                  <a href={localizePath("/studios")} onClick={(e) => { e.preventDefault(); setFilters({ search: "", city: "", style: "" }); }}>
+                    {t("directory.showAllStyles")}
                   </a>
                 )}
                 {filters.city && !filters.style && styles.slice(0, 4).map((style) => (
                   <a
                     key={style}
-                    href={`/studios?city=${encodeURIComponent(filters.city)}&style=${encodeURIComponent(style)}`}
+                    href={localizePath(`/studios?city=${encodeURIComponent(filters.city)}&style=${encodeURIComponent(style)}`)}
                     onClick={(e) => { e.preventDefault(); setFilters((f) => ({ ...f, style })); }}
                   >
-                    {style} i {filters.city}
+                    {t("directory.styleInCity", { style, city: filters.city })}
                   </a>
                 ))}
                 {filters.style && !filters.city && cities.slice(0, 4).map((city) => (
                   <a
                     key={city}
-                    href={`/studios?style=${encodeURIComponent(filters.style)}&city=${encodeURIComponent(city)}`}
+                    href={localizePath(`/studios?style=${encodeURIComponent(filters.style)}&city=${encodeURIComponent(city)}`)}
                     onClick={(e) => { e.preventDefault(); setFilters((f) => ({ ...f, city })); }}
                   >
-                    {filters.style} i {city}
+                    {t("directory.styleInCity", { style: filters.style, city })}
                   </a>
                 ))}
               </div>
@@ -319,25 +324,25 @@ export function StudiosDirectoryPage() {
 
           {!loading && !filters.city && !filters.style && !filters.search && cities.length > 0 ? (
             <div className="seo-landing-text" data-reveal="up">
-              <h2>Utforska tatueringar efter stad och stil</h2>
-              <p>Ink Revenue samlar tatueringsstudios från hela Sverige. Välj stad eller stil för att hitta rätt studio för din idé.</p>
+              <h2>{t("directory.exploreTitle")}</h2>
+              <p>{t("directory.exploreText")}</p>
               <div className="seo-landing-links">
                 {cities.map((city) => (
                   <a
                     key={city}
-                    href={`/studios?city=${encodeURIComponent(city)}`}
+                    href={localizePath(`/studios?city=${encodeURIComponent(city)}`)}
                     onClick={(e) => { e.preventDefault(); setFilters((f) => ({ ...f, city })); }}
                   >
-                    Tatueringsstudio i {city}
+                    {t("directory.exploreCityLink", { city })}
                   </a>
                 ))}
                 {styles.map((style) => (
                   <a
                     key={style}
-                    href={`/studios?style=${encodeURIComponent(style)}`}
+                    href={localizePath(`/studios?style=${encodeURIComponent(style)}`)}
                     onClick={(e) => { e.preventDefault(); setFilters((f) => ({ ...f, style })); }}
                   >
-                    {style}-tatuering
+                    {t("directory.exploreStyleLink", { style })}
                   </a>
                 ))}
               </div>

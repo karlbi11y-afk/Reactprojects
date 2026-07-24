@@ -6,6 +6,11 @@
  * crawlers and link-preview bots get fully-rendered HTML while the browser
  * JS bundle still hydrates normally.
  *
+ * Varje rutt prerendras i båda språken: svenska på "/" och engelska på "/en".
+ * Per rutt skrivs också <html lang>, canonical, hreflang och og:locale om, så
+ * att crawlers ser rätt språksignaler redan i den statiska HTML:en (den JS-satta
+ * versionen i pageMetadata.js hinner de inte alltid vänta på).
+ *
  * Run: node prerender.mjs  (called automatically by "postbuild" npm script)
  */
 
@@ -17,6 +22,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.resolve(__dirname, "dist");
 const serverEntry = path.resolve(distDir, "server", "entry-server.js");
 
+const SITE_URL = "https://inkrevenue.online";
+
+// Språkfria rutter — varje post prerendras en gång per språk nedan.
 const ROUTES = [
   "/",
   "/studios",
@@ -26,6 +34,49 @@ const ROUTES = [
   "/anvandarvillkor",
   "/studio/royalkave",
 ];
+
+// Måste spegla src/i18n/config.js.
+const LANGUAGES = ["sv", "en"];
+const DEFAULT_LANGUAGE = "sv";
+const HTML_LANG = { sv: "sv-SE", en: "en" };
+const OG_LOCALES = { sv: "sv_SE", en: "en_GB" };
+
+function localizeRoute(route, language) {
+  if (language === DEFAULT_LANGUAGE) return route;
+  return route === "/" ? "/en" : `/${language}${route}`;
+}
+
+/**
+ * Byter ut språkberoende head-taggar i shellen mot ruttens egna.
+ * Shellen innehåller startsidans svenska taggar — utan det här skulle varje
+ * prerendrad sida påstå sig vara den svenska startsidan.
+ */
+function applyLanguageHead(html, route, language) {
+  const canonical = `${SITE_URL}${localizeRoute(route, language)}`;
+  const alternates = [
+    ...LANGUAGES.map(
+      (code) =>
+        `<link rel="alternate" href="${SITE_URL}${localizeRoute(route, code)}" hreflang="${HTML_LANG[code]}" />`
+    ),
+    `<link rel="alternate" href="${SITE_URL}${localizeRoute(route, DEFAULT_LANGUAGE)}" hreflang="x-default" />`,
+  ].join("\n    ");
+
+  return html
+    .replace(/<html lang="[^"]*"/, `<html lang="${HTML_LANG[language]}"`)
+    .replace(
+      /<link rel="canonical" href="[^"]*" \/>/,
+      `<link rel="canonical" href="${canonical}" />`
+    )
+    .replace(/<link rel="alternate" href="[^"]*" hreflang="[^"]*" \/>/, alternates)
+    .replace(
+      /<meta property="og:locale"\s+content="[^"]*" \/>/,
+      `<meta property="og:locale"      content="${OG_LOCALES[language]}" />`
+    )
+    .replace(
+      /<meta property="og:url"\s+content="[^"]*" \/>/,
+      `<meta property="og:url"         content="${canonical}" />`
+    );
+}
 
 async function main() {
   // Read the HTML shell produced by vite build
@@ -40,36 +91,39 @@ async function main() {
     process.exit(1);
   }
 
-  // Import the SSR bundle (pathToFileURL needed on Windows for ESM dynamic import)
-  const { pathToFileURL } = await import("url");
-  const { render } = await import(pathToFileURL(serverEntry).href);
+  for (const language of LANGUAGES) {
+    for (const route of ROUTES) {
+      const localizedRoute = localizeRoute(route, language);
+      let appHtml;
 
-  for (const route of ROUTES) {
-    let appHtml;
-    try {
-      appHtml = render(route);
-    } catch (err) {
-      console.warn(`[prerender] Skipping ${route} — render threw:`, err.message);
-      continue;
+      try {
+        // Import the SSR bundle (pathToFileURL needed on Windows for ESM dynamic import)
+        const { pathToFileURL } = await import("url");
+        const { render } = await import(pathToFileURL(serverEntry).href);
+        appHtml = render(localizedRoute);
+      } catch (err) {
+        console.warn(`[prerender] Skipping ${localizedRoute} — render threw:`, err.message);
+        continue;
+      }
+
+      // Splice rendered HTML into the shell + sätt ruttens språksignaler
+      const html = applyLanguageHead(htmlShell, route, language).replace(
+        '<div id="root"></div>',
+        `<div id="root">${appHtml}</div>`
+      );
+
+      // Write to dist/<route>/index.html
+      let outDir;
+      if (localizedRoute === "/") {
+        outDir = distDir;
+      } else {
+        outDir = path.join(distDir, localizedRoute.slice(1).replace(/\//g, path.sep));
+      }
+
+      fs.mkdirSync(outDir, { recursive: true });
+      fs.writeFileSync(path.join(outDir, "index.html"), html, "utf-8");
+      console.log(`[prerender] ✓ ${localizedRoute}`);
     }
-
-    // Splice rendered HTML into the shell
-    const html = htmlShell.replace(
-      '<div id="root"></div>',
-      `<div id="root">${appHtml}</div>`
-    );
-
-    // Write to dist/<route>/index.html
-    let outDir;
-    if (route === "/") {
-      outDir = distDir;
-    } else {
-      outDir = path.join(distDir, route.slice(1).replace(/\//g, path.sep));
-    }
-
-    fs.mkdirSync(outDir, { recursive: true });
-    fs.writeFileSync(path.join(outDir, "index.html"), html, "utf-8");
-    console.log(`[prerender] ✓ ${route}`);
   }
 
   console.log("[prerender] Done.");

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { getPublicStudioBySlug } from "../services/publicSiteApi";
 import { StudioProfilePage } from "./StudioProfilePage";
+import { useT } from "../i18n/LanguageContext";
 
 const READY_MESSAGE_TYPE = "inkrevenue-crm-preview:ready";
 const UPDATE_MESSAGE_TYPE = "inkrevenue-crm-preview:update";
@@ -14,6 +15,7 @@ function getPreviewSlug() {
 }
 
 export function StudioCrmPreviewPage() {
+  const t = useT();
   const [studio, setStudio] = useState(null);
   const previewSlug = useMemo(() => getPreviewSlug(), []);
 
@@ -61,7 +63,9 @@ export function StudioCrmPreviewPage() {
         if (active) {
           setStudio({
             ...response,
-            previewMessage: `Sparad publik sida för ${response.name || "studion"}. När previewn är inbäddad i CRM uppdateras den live medan du skriver.`
+            previewMessage: t("crmPreview.savedMessage", {
+              name: response.name || t("crmPreview.fallbackStudio")
+            })
           });
         }
       })
@@ -74,13 +78,13 @@ export function StudioCrmPreviewPage() {
     return () => {
       active = false;
     };
-  }, [previewSlug, studio]);
+  }, [previewSlug, studio, t]);
 
   if (!studio) {
     return (
       <section className="section section--white">
         <div className="container">
-          <div className="loading-state">Väntar på live preview från CRM...</div>
+          <div className="loading-state">{t("crmPreview.waiting")}</div>
         </div>
       </section>
     );

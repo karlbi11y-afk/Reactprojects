@@ -4,6 +4,7 @@ import { createStrategyCall } from "../services/publicSiteApi";
 import { useLegalConsent } from "../contexts/LegalConsentContext";
 import { useAbandonedFormDraft } from "../hooks/useAbandonedFormDraft";
 import { getTrackingPayload } from "../utils/tracking";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const initialForm = {
   name: "",
@@ -14,16 +15,16 @@ const initialForm = {
   website: ""
 };
 
-function computeError(name, formData, touchedState) {
+function computeError(name, formData, touchedState, t) {
   if (!touchedState[name]) return "";
   switch (name) {
     case "name":
-      return formData.name.trim().length < 2 ? "Fyll i ditt namn." : "";
+      return formData.name.trim().length < 2 ? t("strategyForm.errorName") : "";
     case "studio":
-      return formData.studio.trim().length < 2 ? "Fyll i studions namn." : "";
+      return formData.studio.trim().length < 2 ? t("strategyForm.errorStudio") : "";
     case "email":
       return !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())
-        ? "Ange en giltig e-postadress."
+        ? t("strategyForm.errorEmail")
         : "";
     default:
       return "";
@@ -31,6 +32,7 @@ function computeError(name, formData, touchedState) {
 }
 
 export function StrategyCallForm() {
+  const { t, language } = useLanguage();
   const [formData, setFormData] = useState(initialForm);
   const [status, setStatus] = useState({ state: "idle", message: "" });
   const [touched, setTouched] = useState({});
@@ -67,7 +69,7 @@ export function StrategyCallForm() {
   }
 
   function getFieldError(name) {
-    return computeError(name, formData, touched);
+    return computeError(name, formData, touched, t);
   }
 
   async function handleSubmit(event) {
@@ -76,7 +78,7 @@ export function StrategyCallForm() {
     if (!hasAcceptedConsent) {
       setStatus({
         state: "error",
-        message: "Godkänn integritetspolicy och villkor för att fortsätta."
+        message: t("strategyForm.errorConsent")
       });
       openLegalModal();
       return;
@@ -86,18 +88,18 @@ export function StrategyCallForm() {
     setTouched(allTouched);
 
     if (
-      computeError("name", formData, allTouched) ||
-      computeError("studio", formData, allTouched) ||
-      computeError("email", formData, allTouched)
+      computeError("name", formData, allTouched, t) ||
+      computeError("studio", formData, allTouched, t) ||
+      computeError("email", formData, allTouched, t)
     ) {
       setStatus({
         state: "error",
-        message: "Kontrollera fälten markerade i rött och försök igen."
+        message: t("strategyForm.errorFields")
       });
       return;
     }
 
-    setStatus({ state: "loading", message: "Skickar din förfrågan..." });
+    setStatus({ state: "loading", message: t("strategyForm.sending") });
 
     try {
       const response = await createStrategyCall({
@@ -105,14 +107,17 @@ export function StrategyCallForm() {
         privacyConsent: true,
         marketingConsent: false,
         draftId,
+        // Så att vi vet vilket språk avsändaren läste sajten på när vi svarar.
+        language,
         ...getTrackingPayload()
       });
 
       setStatus({
         state: "success",
+        // Backendens standardsvar är alltid svenskt — på engelska visar vi vårt
+        // eget i stället för att svara en engelsk besökare på svenska.
         message:
-          response?.successMessage ||
-          "Tack! Vi har tagit emot din förfrågan och återkommer normalt inom 24 timmar."
+          (language === "sv" && response?.successMessage) || t("strategyForm.success")
       });
       setFormData(initialForm);
       setTouched({});
@@ -120,27 +125,22 @@ export function StrategyCallForm() {
     } catch (error) {
       setStatus({
         state: "error",
-        message:
-          error.message ||
-          "Det gick inte att skicka just nu. Kontrollera dina uppgifter och försök igen lite senare."
+        message: error.message || t("strategyForm.errorGeneric")
       });
     }
   }
 
   return (
     <form className="booking-form" data-reveal="right" onSubmit={handleSubmit}>
-      <p className="form-note">
-        Berätta kort om nuläge och vad ni vill ha hjälp med, så kan vi göra första samtalet mer
-        relevant.
-      </p>
+      <p className="form-note">{t("strategyForm.note")}</p>
 
       <label htmlFor="strategy-name" className={getFieldError("name") ? "has-error" : ""}>
-        Namn
+        {t("strategyForm.name")}
         <input
           id="strategy-name"
           type="text"
           name="name"
-          placeholder="Ditt namn"
+          placeholder={t("strategyForm.namePlaceholder")}
           value={formData.name}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -153,12 +153,12 @@ export function StrategyCallForm() {
       </label>
 
       <label htmlFor="strategy-studio" className={getFieldError("studio") ? "has-error" : ""}>
-        Studio
+        {t("strategyForm.studio")}
         <input
           id="strategy-studio"
           type="text"
           name="studio"
-          placeholder="Studions namn"
+          placeholder={t("strategyForm.studioPlaceholder")}
           value={formData.studio}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -171,12 +171,12 @@ export function StrategyCallForm() {
       </label>
 
       <label htmlFor="strategy-email" className={getFieldError("email") ? "has-error" : ""}>
-        E-post
+        {t("strategyForm.email")}
         <input
           id="strategy-email"
           type="email"
           name="email"
-          placeholder="namn@dinstudio.se"
+          placeholder={t("strategyForm.emailPlaceholder")}
           value={formData.email}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -189,24 +189,24 @@ export function StrategyCallForm() {
       </label>
 
       <label htmlFor="strategy-phone">
-        Telefonnummer
+        {t("strategyForm.phone")}
         <input
           id="strategy-phone"
           type="tel"
           name="phone"
-          placeholder="070-000 00 00"
+          placeholder={t("strategyForm.phonePlaceholder")}
           value={formData.phone}
           onChange={handleChange}
         />
       </label>
 
       <label htmlFor="strategy-message">
-        Meddelande
+        {t("strategyForm.message")}
         <textarea
           id="strategy-message"
           name="message"
           rows="4"
-          placeholder="Berätta kort om era mål och vilken typ av hjälp ni söker"
+          placeholder={t("strategyForm.messagePlaceholder")}
           value={formData.message}
           onChange={handleChange}
         />
@@ -214,7 +214,7 @@ export function StrategyCallForm() {
 
       <div className="hidden-trap" aria-hidden="true">
         <label htmlFor="strategy-website">
-          Lämna detta fält tomt
+          {t("strategyForm.honeypot")}
           <input
             id="strategy-website"
             type="text"
@@ -230,7 +230,7 @@ export function StrategyCallForm() {
       <FormLegalLinks />
 
       <button className="btn btn-primary" type="submit" disabled={status.state === "loading"}>
-        {status.state === "loading" ? "Skickar..." : "Boka strategisamtalet"}
+        {status.state === "loading" ? t("strategyForm.submitting") : t("strategyForm.submit")}
       </button>
 
       {status.message ? (

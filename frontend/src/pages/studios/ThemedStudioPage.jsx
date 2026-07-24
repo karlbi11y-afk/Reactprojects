@@ -3,6 +3,7 @@ import { buildPageTitle, usePageMetadata } from "../../utils/pageMetadata";
 import { getPublicStudioBySlug } from "../../services/publicSiteApi";
 import { StudioLeadFormEnhanced } from "../../components/StudioLeadFormEnhanced";
 import { getStudioTags } from "../../utils/studioTags";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 /**
  * @typedef {Object} StudioTheme
@@ -47,25 +48,16 @@ function resolveTheme(partial = {}) {
 }
 
 // Default "how it works" steps — studio can override via formIntro in CRM
-const DEFAULT_STEPS = [
-  {
-    n: "01",
-    title: "Berätta om din idé",
-    text: "Fyll i stil, placering, storlek och en kort beskrivning. Bifoga gärna en inspirationsbild.",
-  },
-  {
-    n: "02",
-    title: "Studion återkopplar",
-    text: "Du hör från studion om prisuppskattning, konsultation eller direkt bokning — beroende på deras upplägg.",
-  },
-  {
-    n: "03",
-    title: "Dags för tatueringen",
-    text: "Kom till studion vid överenskommet tillfälle och förvandla din idé till bestående konst.",
-  },
-];
+function buildDefaultSteps(t) {
+  return [
+    { n: "01", title: t("themedStudio.step1Title"), text: t("themedStudio.step1Text") },
+    { n: "02", title: t("themedStudio.step2Title"), text: t("themedStudio.step2Text") },
+    { n: "03", title: t("themedStudio.step3Title"), text: t("themedStudio.step3Text") },
+  ];
+}
 
 export function ThemedStudioPage({ slug, theme: themePartial = {} }) {
+  const { t: translate } = useLanguage();
   const [studio, setStudio] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -90,8 +82,13 @@ export function ThemedStudioPage({ slug, theme: themePartial = {} }) {
   const tags = useMemo(() => (studio ? [...new Set(getStudioTags(studio))] : []), [studio]);
 
   const pageTitle = useMemo(
-    () => buildPageTitle(studio?.name ? `${studio.name}${studio.city ? ` i ${studio.city}` : ""}` : "Studio"),
-    [studio]
+    () =>
+      buildPageTitle(
+        studio?.name
+          ? `${studio.name}${studio.city ? translate("studio.metaCityPart", { city: studio.city }) : ""}`
+          : translate("themedStudio.fallbackTitle")
+      ),
+    [studio, translate]
   );
 
   usePageMetadata({
@@ -104,7 +101,7 @@ export function ThemedStudioPage({ slug, theme: themePartial = {} }) {
   if (loading) {
     return (
       <div style={{ background: t.bg, minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: t.fontBody, color: t.textMuted }}>
-        Laddar...
+        {translate("themedStudio.loading")}
       </div>
     );
   }
@@ -112,7 +109,7 @@ export function ThemedStudioPage({ slug, theme: themePartial = {} }) {
   if (error || !studio) {
     return (
       <div style={{ background: t.bg, minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: t.fontBody, color: t.textMuted }}>
-        Studiosidan kunde inte laddas.
+        {translate("themedStudio.error")}
       </div>
     );
   }
@@ -232,7 +229,7 @@ export function ThemedStudioPage({ slug, theme: themePartial = {} }) {
                 fontSize: "0.9rem", color: "rgba(255,255,255,0.6)", letterSpacing: "0.2em",
                 textTransform: "uppercase", marginBottom: "2.5rem",
               }}>
-                {studio.city} · Tatueringsstudio
+                {translate("themedStudio.cityKind", { city: studio.city })}
               </p>
             )}
             <a
@@ -243,7 +240,7 @@ export function ThemedStudioPage({ slug, theme: themePartial = {} }) {
                 document.getElementById("ts-booking")?.scrollIntoView({ behavior: "smooth" });
               }}
             >
-              Boka nu
+              {translate("themedStudio.bookNow")}
             </a>
             {(profile.instagramUrl || profile.websiteUrl) && (
               <div style={{ display: "flex", justifyContent: "center", gap: "1.25rem", marginTop: "1.5rem" }}>
@@ -258,7 +255,7 @@ export function ThemedStudioPage({ slug, theme: themePartial = {} }) {
                       <circle cx="12" cy="12" r="4"/>
                       <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/>
                     </svg>
-                    Instagram
+                    {translate("themedStudio.instagram")}
                   </a>
                 )}
                 {profile.websiteUrl && (
@@ -272,7 +269,7 @@ export function ThemedStudioPage({ slug, theme: themePartial = {} }) {
                       <line x1="2" y1="12" x2="22" y2="12"/>
                       <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
                     </svg>
-                    Hemsida
+                    {translate("themedStudio.website")}
                   </a>
                 )}
               </div>
@@ -286,7 +283,7 @@ export function ThemedStudioPage({ slug, theme: themePartial = {} }) {
             {galleryImages[0] && (
               <img
                 src={galleryImages[0]}
-                alt={`${studio.name} studio`}
+                alt={translate("themedStudio.studioAlt", { name: studio.name })}
                 style={{ width: "100%", minHeight: 500, objectFit: "cover", display: "block" }}
               />
             )}
@@ -298,7 +295,7 @@ export function ThemedStudioPage({ slug, theme: themePartial = {} }) {
                 fontSize: "clamp(2.5rem, 5vw, 4rem)", color: t.text,
                 marginBottom: "1.5rem", lineHeight: 1.05,
               })}>
-                Om<br />studion
+                {translate("themedStudio.aboutLine1")}<br />{translate("themedStudio.aboutLine2")}
               </h2>
               <p style={{ fontSize: "1.05rem", lineHeight: 1.85, color: t.textMuted, maxWidth: 500 }}>
                 {aboutText}
@@ -318,7 +315,7 @@ export function ThemedStudioPage({ slug, theme: themePartial = {} }) {
               )}
               {profile.websiteUrl && (
                 <a href={profile.websiteUrl} target="_blank" rel="noopener noreferrer" style={accentBtnStyle}>
-                  Besök hemsida
+                  {translate("themedStudio.visitWebsite")}
                 </a>
               )}
             </div>
@@ -332,10 +329,10 @@ export function ThemedStudioPage({ slug, theme: themePartial = {} }) {
               fontSize: "clamp(2rem, 5vw, 3.5rem)", color: t.textLight,
               marginBottom: "3rem", textAlign: "center",
             })}>
-              Hur det går till
+              {translate("themedStudio.howTitle")}
             </h2>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "2.5rem" }}>
-              {DEFAULT_STEPS.map((step) => (
+              {buildDefaultSteps(translate).map((step) => (
                 <div key={step.n}>
                   <div style={headingStyle({
                     fontSize: "3.5rem", color: t.accent === "#111111" ? "rgba(255,255,255,0.12)" : t.accent,
@@ -364,7 +361,7 @@ export function ThemedStudioPage({ slug, theme: themePartial = {} }) {
               fontSize: "clamp(2rem, 5vw, 3.5rem)", color: t.text,
               marginBottom: "2.5rem", textAlign: "center",
             })}>
-              Galleri
+              {translate("themedStudio.gallery")}
             </h2>
             <div style={{
               display: "grid",
@@ -377,7 +374,7 @@ export function ThemedStudioPage({ slug, theme: themePartial = {} }) {
                 <img
                   key={i}
                   src={url}
-                  alt={`${studio.name} — bild ${i + 1}`}
+                  alt={translate("themedStudio.imageAlt", { name: studio.name, index: i + 1 })}
                   style={{ width: "100%", aspectRatio: "1", objectFit: "cover", display: "block" }}
                 />
               ))}
@@ -396,11 +393,10 @@ export function ThemedStudioPage({ slug, theme: themePartial = {} }) {
               <h2 style={headingStyle({
                 fontSize: "clamp(2rem, 5vw, 3rem)", color: t.textLight, marginBottom: "0.75rem",
               })}>
-                {profile.formTitle || "Skicka din förfrågan"}
+                {profile.formTitle || translate("themedStudio.formTitle")}
               </h2>
               <p style={{ fontSize: "1rem", color: "rgba(255,255,255,0.6)", marginBottom: "2rem", lineHeight: 1.7 }}>
-                {profile.formIntro ||
-                  "Fyll i formuläret nedan — ju mer du berättar, desto lättare är det för studion att ge dig ett relevant svar direkt."}
+                {profile.formIntro || translate("themedStudio.formIntro")}
               </p>
             </div>
 
@@ -432,13 +428,13 @@ export function ThemedStudioPage({ slug, theme: themePartial = {} }) {
             {profile.instagramUrl && (
               <a href={profile.instagramUrl} target="_blank" rel="noopener noreferrer"
                 style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>
-                Instagram
+                {translate("themedStudio.instagram")}
               </a>
             )}
             {profile.websiteUrl && (
               <a href={profile.websiteUrl} target="_blank" rel="noopener noreferrer"
                 style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>
-                Hemsida
+                {translate("themedStudio.website")}
               </a>
             )}
             <span style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.35)" }}>inkrevenue.se</span>

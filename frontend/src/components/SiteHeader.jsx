@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { SiteLink } from "../utils/siteRouter";
+import { useT } from "../i18n/LanguageContext";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 export function SiteHeader({ currentPath }) {
+  const t = useT();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const navRef = useRef(null);
@@ -47,13 +50,13 @@ export function SiteHeader({ currentPath }) {
     <header className={`site-header${scrolled ? " site-header--scrolled" : ""}`} ref={navRef}>
       <div className="container site-header__inner">
         <SiteLink className="site-brand" href="/">
-          <img src="/ink-revenue-logo.svg" alt="Ink Revenue logotyp" />
+          <img src="/ink-revenue-logo.svg" alt={t("common.logoAlt")} />
           <span>Ink Revenue</span>
         </SiteLink>
 
         <nav
           className={`site-nav${menuOpen ? " site-nav--open" : ""}`}
-          aria-label="Huvudnavigation"
+          aria-label={t("header.nav")}
         >
           <SiteLink
             className={`site-nav__link ${currentPath === "/" ? "site-nav__link--active" : ""}`}
@@ -61,7 +64,7 @@ export function SiteHeader({ currentPath }) {
             href="/"
             onClick={() => setMenuOpen(false)}
           >
-            Hem
+            {t("header.home")}
           </SiteLink>
           <SiteLink
             className={`site-nav__link ${isStudiosSection ? "site-nav__link--active" : ""}`}
@@ -69,7 +72,7 @@ export function SiteHeader({ currentPath }) {
             href="/studios"
             onClick={() => setMenuOpen(false)}
           >
-            Studios
+            {t("header.studios")}
           </SiteLink>
           <SiteLink
             className={`site-nav__link ${isFaq ? "site-nav__link--active" : ""}`}
@@ -77,20 +80,21 @@ export function SiteHeader({ currentPath }) {
             href="/faq"
             onClick={() => setMenuOpen(false)}
           >
-            FAQ
+            {t("header.faq")}
           </SiteLink>
+          <LanguageSwitcher onNavigate={() => setMenuOpen(false)} />
           <SiteLink
             className="btn btn-primary site-header__cta"
             href={strategyHref}
             onClick={() => setMenuOpen(false)}
           >
-            Boka gratis strategisamtal
+            {t("header.cta")}
           </SiteLink>
         </nav>
 
         <button
           className={`site-burger${menuOpen ? " site-burger--open" : ""}`}
-          aria-label={menuOpen ? "Stäng meny" : "Öppna meny"}
+          aria-label={menuOpen ? t("header.closeMenu") : t("header.openMenu")}
           aria-expanded={menuOpen}
           aria-controls="site-nav"
           type="button"

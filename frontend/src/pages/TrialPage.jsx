@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { buildPageTitle, usePageMetadata } from "../utils/pageMetadata";
 import { SiteLink } from "../utils/siteRouter";
+import { useLanguage } from "../i18n/LanguageContext";
 
 // ?plan=trial förväljer 30-dagars gratisperioden på CRM:ets registersida.
 const REGISTER_URL = "https://inkrevenue-crm.online/register";
@@ -35,12 +36,12 @@ function ArrowIcon() {
 }
 
 export function TrialPage() {
+  const { t } = useLanguage();
   const registerHref = useRegisterHref();
 
   usePageMetadata({
-    title: buildPageTitle("Testa gratis i 30 dagar"),
-    description:
-      "Skapa ett konto och testa Ink Revenue gratis i 30 dagar — utan betalkort. Egen studio-sida, smartare bokningsförfrågningar och allt samlat på ett ställe. Ingen bindningstid.",
+    title: buildPageTitle(t("trial.metaTitle")),
+    description: t("trial.metaDescription"),
     path: "/testa-gratis"
   });
 
@@ -52,29 +53,26 @@ export function TrialPage() {
         <div className="hero__orb hero__orb--right" />
         <div className="container hero__content">
           <div className="brand-lockup">
-            <img className="brand-logo" src="/ink-revenue-logo.svg" alt="Ink Revenue logotyp" />
+            <img className="brand-logo" src="/ink-revenue-logo.svg" alt={t("common.logoAlt")} />
             <div className="brand-mark">Ink Revenue</div>
           </div>
 
-          <p className="eyebrow eyebrow--light">För tatueringsstudior &amp; artister</p>
-          <h1>Testa gratis i 30 dagar</h1>
-          <p className="lead">
-            Er egen studio-sida, bokningsförfrågningar med idé, placering och budget redan ifyllt —
-            och allt samlat i en egen inloggning. Skapa kontot på några minuter.
-          </p>
+          <p className="eyebrow eyebrow--light">{t("trial.eyebrow")}</p>
+          <h1>{t("trial.title")}</h1>
+          <p className="lead">{t("trial.lead")}</p>
 
           <div className="cta-row">
             <a className="btn btn-primary" href={registerHref}>
-              Kom igång gratis
+              {t("trial.ctaPrimary")}
               <ArrowIcon />
             </a>
           </div>
-          <p className="cta-note">30 dagar gratis — inget betalkort, ingen bindningstid, avsluta när ni vill</p>
+          <p className="cta-note">{t("trial.ctaNote")}</p>
 
           <div className="badge-row badge-row--light">
-            <span className="badge">✓ Inget betalkort behövs</span>
-            <span className="badge">✓ Klart på några minuter</span>
-            <span className="badge">✓ Ni äger alltid er data</span>
+            <span className="badge">{t("trial.badge1")}</span>
+            <span className="badge">{t("trial.badge2")}</span>
+            <span className="badge">{t("trial.badge3")}</span>
           </div>
         </div>
       </section>
@@ -83,10 +81,10 @@ export function TrialPage() {
       <section className="section section--white" id="det-har-ingar">
         <div className="container">
           <div data-reveal="up" style={{ textAlign: "center", maxWidth: 620, margin: "0 auto 52px" }}>
-            <p className="eyebrow">Det här ingår</p>
-            <h2>Allt ni behöver för att ta emot fler bokningar</h2>
+            <p className="eyebrow">{t("trial.includedEyebrow")}</p>
+            <h2>{t("trial.includedTitle")}</h2>
             <p className="body" style={{ fontSize: "1.05rem" }}>
-              Testperioden ger er tillgång till hela bokningsplanen — samma verktyg som våra betalande studios använder varje dag.
+              {t("trial.includedLead")}
             </p>
           </div>
 
@@ -97,8 +95,8 @@ export function TrialPage() {
                   <rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" />
                 </svg>
               </div>
-              <h3>Er egen studio-sida</h3>
-              <p>Logotyp, galleri, stil-taggar och om-text — i vår katalog där kunder söker studio efter stil och stad.</p>
+              <h3>{t("trial.included1Title")}</h3>
+              <p>{t("trial.included1Text")}</p>
             </div>
             <div className="card" data-reveal="up" data-reveal-delay="2">
               <div className="card__icon">
@@ -106,8 +104,8 @@ export function TrialPage() {
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
               </div>
-              <h3>Förfrågningar med substans</h3>
-              <p>Kunder beskriver idé, placering och budget direkt i formuläret — ni slipper fram-och-tillbaka i DM och kan svara med ett prisförslag direkt.</p>
+              <h3>{t("trial.included2Title")}</h3>
+              <p>{t("trial.included2Text")}</p>
             </div>
             <div className="card" data-reveal="up" data-reveal-delay="3">
               <div className="card__icon">
@@ -115,8 +113,8 @@ export function TrialPage() {
                   <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
                 </svg>
               </div>
-              <h3>Allt samlat på ett ställe</h3>
-              <p>Förfrågningar, bokningar och statistik i er egen inloggning. Inga kalkylark, inga missade meddelanden.</p>
+              <h3>{t("trial.included3Title")}</h3>
+              <p>{t("trial.included3Text")}</p>
             </div>
           </div>
         </div>
@@ -126,25 +124,25 @@ export function TrialPage() {
       <section className="section section--lavender" id="sa-kommer-ni-igang">
         <div className="container">
           <div data-reveal="up" style={{ textAlign: "center", maxWidth: 620, margin: "0 auto 52px" }}>
-            <p className="eyebrow">Så kommer ni igång</p>
-            <h2>Från konto till förfrågningar i tre steg</h2>
+            <p className="eyebrow">{t("trial.startEyebrow")}</p>
+            <h2>{t("trial.startTitle")}</h2>
           </div>
 
           <div className="steps" data-reveal="fade">
             <div className="step" data-reveal="up" data-reveal-delay="1">
               <div className="step__number">1</div>
-              <h3>Skapa ert konto</h3>
-              <p>Registrera studion på ett par minuter. Inget betalkort, inga säljsamtal — ni testar i er egen takt.</p>
+              <h3>{t("trial.start1Title")}</h3>
+              <p>{t("trial.start1Text")}</p>
             </div>
             <div className="step" data-reveal="up" data-reveal-delay="2">
               <div className="step__number">2</div>
-              <h3>Sätt upp er sida</h3>
-              <p>Ladda upp logotyp och galleri, välj era stilar och aktivera bokningsformuläret.</p>
+              <h3>{t("trial.start2Title")}</h3>
+              <p>{t("trial.start2Text")}</p>
             </div>
             <div className="step" data-reveal="up" data-reveal-delay="3">
               <div className="step__number">3</div>
-              <h3>Ta emot förfrågningar</h3>
-              <p>Dela er sida i bion och låt kunderna höra av sig — allt landar i er inkorg.</p>
+              <h3>{t("trial.start3Title")}</h3>
+              <p>{t("trial.start3Text")}</p>
             </div>
           </div>
         </div>
@@ -155,20 +153,17 @@ export function TrialPage() {
         <div className="container" style={{ position: "relative", zIndex: 1 }}>
           <div className="section-title" data-reveal="fade">
             <div className="line" />
-            <h2>Redo att testa?</h2>
+            <h2>{t("trial.readyTitle")}</h2>
             <div className="line" />
           </div>
 
           <div data-reveal="up" style={{ textAlign: "center", maxWidth: 560, margin: "0 auto" }}>
             <p className="body" style={{ fontSize: "1.05rem" }}>
-              30 dagar räcker gott och väl för att sätta upp er sida och känna på flödet.
-              Ni lägger aldrig in något betalkort, och perioden övergår inte automatiskt i ett
-              abonnemang — vill ni fortsätta väljer ni upplägg själva. Gillar ni det inte kostar
-              det er ingenting.
+              {t("trial.readyText")}
             </p>
             <div className="cta-row" style={{ marginTop: 28 }}>
               <a className="btn btn-primary" href={registerHref}>
-                Testa gratis i 30 dagar
+                {t("trial.readyCta")}
                 <ArrowIcon />
               </a>
             </div>
@@ -177,23 +172,23 @@ export function TrialPage() {
           <div className="trust-bar" data-reveal="up">
             <div className="trust-item">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg>
-              30 dagar gratis
+              {t("trial.trust1")}
             </div>
             <div className="trust-item">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg>
-              Inget betalkort
+              {t("trial.trust2")}
             </div>
             <div className="trust-item">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg>
-              Ingen bindningstid
+              {t("trial.trust3")}
             </div>
             <div className="trust-item">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg>
-              Ni äger alltid er data
+              {t("trial.trust4")}
             </div>
             <div className="trust-item">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg>
-              Igång på några minuter
+              {t("trial.trust5")}
             </div>
           </div>
         </div>
@@ -203,14 +198,13 @@ export function TrialPage() {
       <section className="section section--white" id="hellre-hanterat">
         <div className="container">
           <div className="trial-alt" data-reveal="up">
-            <p className="eyebrow">Vill ni hellre slippa allt själva?</p>
-            <h2>Vi kan sköta hela marknadsföringen åt er</h2>
+            <p className="eyebrow">{t("trial.altEyebrow")}</p>
+            <h2>{t("trial.altTitle")}</h2>
             <p className="body" style={{ fontSize: "1.02rem" }}>
-              Annonser, innehåll och uppföljning av varje förfrågan — helt hanterat av oss.
-              Boka ett gratis strategisamtal så går vi igenom vad som passar er studio bäst.
+              {t("trial.altText")}
             </p>
             <SiteLink className="btn btn-secondary" href="/#bokning" style={{ marginTop: 10 }}>
-              Boka gratis strategisamtal
+              {t("trial.altCta")}
             </SiteLink>
           </div>
         </div>

@@ -1,4 +1,6 @@
 import { useEffect, useRef } from "react";
+import { useLanguage } from "../i18n/LanguageContext";
+import { DEFAULT_LANGUAGE, HTML_LANG, LANGUAGES, OG_LOCALES, buildLanguagePath } from "../i18n/config";
 
 const BRAND_NAME = "Ink Revenue";
 const SITE_URL = "https://inkrevenue.online";
@@ -65,6 +67,30 @@ function upsertLink(rel, href) {
   }
 }
 
+/**
+ * hreflang-alternativ: en <link rel="alternate"> per språk plus x-default.
+ * De märks med data-i18n-alt så att vi kan byta ut hela uppsättningen vid
+ * navigering utan att röra andra <link rel="alternate">-taggar.
+ */
+function upsertAlternateLinks(entries) {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  document.head
+    .querySelectorAll('link[data-i18n-alt="1"]')
+    .forEach((element) => element.remove());
+
+  entries.forEach(({ hrefLang, href }) => {
+    const element = document.createElement("link");
+    element.setAttribute("rel", "alternate");
+    element.setAttribute("hreflang", hrefLang);
+    element.setAttribute("href", href);
+    element.setAttribute("data-i18n-alt", "1");
+    document.head.appendChild(element);
+  });
+}
+
 export function useJsonLd(schema) {
   const scriptRef = useRef(null);
 
@@ -105,21 +131,27 @@ export function usePageMetadata({
   path = "",
   noIndex = false
 }) {
+  const { language } = useLanguage();
+
   useEffect(() => {
     if (typeof document === "undefined" || typeof window === "undefined") {
       return;
     }
 
-    const canonicalUrl = path ? toAbsoluteUrl(path) : window.location.href;
+    // path skickas alltid språkfritt ("/studios") — prefixet läggs på här så
+    // att canonical och hreflang pekar på rätt språkversion.
+    const localizedPath = path ? buildLanguagePath(path, language) : "";
+    const canonicalUrl = localizedPath ? toAbsoluteUrl(localizedPath) : window.location.href;
     const imageUrl = toAbsoluteUrl(image || DEFAULT_IMAGE_PATH);
     const resolvedTitle = title || BRAND_NAME;
     const resolvedDescription = String(description || "").trim();
 
     document.title = resolvedTitle;
+    document.documentElement.setAttribute("lang", HTML_LANG[language] || HTML_LANG[DEFAULT_LANGUAGE]);
 
     upsertMeta("name", "description", resolvedDescription);
     upsertMeta("name", "robots", noIndex ? "noindex, nofollow" : "index, follow, max-image-preview:large, max-snippet:-1");
-    upsertMeta("property", "og:locale", "sv_SE");
+    upsertMeta("property", "og:locale", OG_LOCALES[language] || OG_LOCALES[DEFAULT_LANGUAGE]);
     upsertMeta("property", "og:site_name", BRAND_NAME);
     upsertMeta("property", "og:type", type);
     upsertMeta("property", "og:title", resolvedTitle);
@@ -135,5 +167,19 @@ export function usePageMetadata({
     upsertMeta("name", "twitter:image:alt", resolvedTitle);
     upsertMeta("property", "og:image:alt", resolvedTitle);
     upsertLink("canonical", canonicalUrl);
-  }, [description, image, noIndex, path, title, type]);
+
+    // hreflang bara på sidor som ska indexeras och som har en känd sökväg.
+    // Preview-/404-sidor pekar ingenstans meningsfullt.
+    if (path && !noIndex) {
+      upsertAlternateLinks([
+        ...LANGUAGES.map((code) => ({
+          hrefLang: HTML_LANG[code],
+          href: `${SITE_URL}${buildLanguagePath(path, code)}`
+        })),
+        { hrefLang: "x-default", href: `${SITE_URL}${buildLanguagePath(path, DEFAULT_LANGUAGE)}` }
+      ]);
+    } else {
+      upsertAlternateLinks([]);
+    }
+  }, [description, image, language, noIndex, path, title, type]);
 }

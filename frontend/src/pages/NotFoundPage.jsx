@@ -1,10 +1,13 @@
 import { SiteLink } from "../utils/siteRouter";
 import { buildPageTitle, usePageMetadata } from "../utils/pageMetadata";
+import { useT } from "../i18n/LanguageContext";
 
 export function NotFoundPage() {
+  const t = useT();
+
   usePageMetadata({
-    title: buildPageTitle("Sidan kunde inte hittas"),
-    description: "Sidan du letar efter finns inte längre. Gå tillbaka till startsidan eller öppna studiokatalogen.",
+    title: buildPageTitle(t("notFound.metaTitle")),
+    description: t("notFound.metaDescription"),
     noIndex: true
   });
 
@@ -13,17 +16,14 @@ export function NotFoundPage() {
       <div className="container">
         <div className="empty-panel">
           <p className="eyebrow">404</p>
-          <h2>Sidan kunde inte hittas</h2>
-          <p>
-            Länken verkar vara fel eller så finns sidan inte längre. Du kan alltid gå tillbaka till
-            startsidan eller öppna studiokatalogen.
-          </p>
+          <h2>{t("notFound.title")}</h2>
+          <p>{t("notFound.text")}</p>
           <div className="cta-row">
             <SiteLink className="btn btn-primary" href="/">
-              Till startsidan
+              {t("notFound.home")}
             </SiteLink>
             <SiteLink className="btn btn-secondary" href="/studios">
-              Se studios
+              {t("notFound.studios")}
             </SiteLink>
           </div>
         </div>

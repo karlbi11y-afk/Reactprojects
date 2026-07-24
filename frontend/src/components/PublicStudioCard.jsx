@@ -1,14 +1,16 @@
 import { SiteLink } from "../utils/siteRouter";
 import { getStudioTags } from "../utils/studioTags";
+import { useT } from "../i18n/LanguageContext";
 
 export function PublicStudioCard({ studio, compact = false, cardTheme = null, revealDelay }) {
+  const t = useT();
   const tags = [...new Set(getStudioTags(studio))].slice(0, compact ? 3 : 5);
   const studioHref = `/studio/${studio.slug}`;
   const summary =
     studio.publicProfile?.cardSummary ||
     studio.publicProfile?.headline ||
     studio.description ||
-    "Utforska studions stil, bilder och kontaktvägar här.";
+    t("studioCard.fallbackSummary");
 
   const mediaImageUrl = studio.heroImageUrl || studio.publicProfile?.galleryImageUrls?.[0] || null;
   const mediaStyle = mediaImageUrl
@@ -23,20 +25,24 @@ export function PublicStudioCard({ studio, compact = false, cardTheme = null, re
     <SiteLink
       className={`studio-card ${compact ? "studio-card--compact" : ""}`}
       href={studioHref}
-      aria-label={`Se studio ${studio.name}`}
+      aria-label={t("studioCard.ariaLabel", { name: studio.name })}
       data-reveal="scale"
       data-reveal-delay={revealDelay || undefined}
     >
       <div className="studio-card__media" style={mediaStyle}>
         {studio.logoUrl ? (
-          <img className="studio-card__logo" src={studio.logoUrl} alt={`${studio.name} logotyp`} />
+          <img
+            className="studio-card__logo"
+            src={studio.logoUrl}
+            alt={t("studioCard.logoAlt", { name: studio.name })}
+          />
         ) : null}
       </div>
 
       <div className="studio-card__body">
         <div className="studio-card__meta">
-          <span>{studio.city || "Sverige"}</span>
-          <span>{studio.publicProfile?.serviceArea || studio.city || "Tatueringsstudio"}</span>
+          <span>{studio.city || t("studioCard.country")}</span>
+          <span>{studio.publicProfile?.serviceArea || studio.city || t("studioCard.kind")}</span>
         </div>
 
         <h3>{studio.name}</h3>
@@ -68,7 +74,7 @@ export function PublicStudioCard({ studio, compact = false, cardTheme = null, re
               : undefined
           }
         >
-          Se studio
+          {t("studioCard.cta")}
         </span>
       </div>
     </SiteLink>

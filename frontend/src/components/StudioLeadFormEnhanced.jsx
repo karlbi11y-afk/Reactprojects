@@ -12,27 +12,39 @@ import {
 import { useAbandonedFormDraft } from "../hooks/useAbandonedFormDraft";
 import { getLeadSourceFromUrl, getTrackingPayload } from "../utils/tracking";
 import { prepareLeadImageUpload, MAX_INSPIRATION_IMAGE_MB } from "../utils/prepareLeadImageUpload";
-
-const WEEKDAY_LABELS = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
+import { useLanguage, useT } from "../i18n/LanguageContext";
+import { sv } from "../i18n/sv";
+import { translateOptionLabel } from "../i18n/optionLabels";
 
 // Sentinelvärde för "Annat" i stil-dropdownen. Väljs det byter formuläret till
 // konsultation eftersom studion inte har en tidsberäkning för stilen.
 const OTHER_STYLE_VALUE = "__other__";
 const OTHER_PLACEMENT_VALUE = "__other_placement__";
 
+/**
+ * VIKTIGT om språk i det här formuläret:
+ *
+ * Etiketterna kunden läser översätts, men VÄRDENA som skickas till CRM:et är
+ * alltid svenska. Backendens tidsberäkning (publicLeadBookingBotService) matchar
+ * svenska nyckelord som delsträngar i stil- och storlekstexten — skickar vi
+ * "Very small (up to 5 cm)" faller estimatet tyst tillbaka på fel tid.
+ * Därför byggs värden alltid ur den svenska ordboken.
+ */
+
 // Reservlista om studion saknar konfigurerade modifierare/stilar, så att
 // dropdownen aldrig blir tom.
-const FALLBACK_STYLE_OPTIONS = [
-  { label: "Fineline / mycket detalj", value: "Fineline / mycket detalj" },
-  { label: "Black & grey realism", value: "Black & grey realism" },
-  { label: "Cover-up", value: "Cover-up" },
-  { label: "Ornamental / mycket mönster", value: "Ornamental / mycket mönster" }
-];
+function buildFallbackStyleOptions(tList) {
+  const labels = tList("leadForm.fallbackStyles");
+  return sv.leadForm.fallbackStyles.map((value, index) => ({
+    label: labels[index] || value,
+    value
+  }));
+}
 
 // Bygger dropdown-alternativen från studions data. Föredrar styleOptions
 // (modifierarnas labels från backend), faller tillbaka på studio.styles och
 // därefter en reservlista.
-function buildStyleOptions(studio) {
+function buildStyleOptions(studio, tList, language) {
   const fromModifiers = Array.isArray(studio?.styleOptions)
     ? studio.styleOptions
         .map((option) => {
@@ -42,7 +54,12 @@ function buildStyleOptions(studio) {
           }
           const value = String(option?.value || option?.label || "").trim();
           const label = String(option?.label || value).trim();
-          return value ? { label: label || value, value } : null;
+          if (!value) return null;
+          // Etiketten översätts, värdet lämnas orört — se kommentaren överst.
+          return {
+            label: translateOptionLabel("style", option?.builtInKey, label || value, language),
+            value
+          };
         })
         .filter(Boolean)
     : [];
@@ -58,13 +75,13 @@ function buildStyleOptions(studio) {
 
   if (fromStyles.length > 0) return fromStyles;
 
-  return FALLBACK_STYLE_OPTIONS;
+  return buildFallbackStyleOptions(tList);
 }
 
 // Placeringar studion valt i sina bokningsregler. Saknas de får kunden skriva
 // fritt som förut — ingen studio ska tvingas fylla i listan för att formuläret
 // ska funka.
-function buildPlacementOptions(studio) {
+function buildPlacementOptions(studio, language) {
   const options = Array.isArray(studio?.placementOptions)
     ? studio.placementOptions
         .map((option) => {
@@ -74,7 +91,12 @@ function buildPlacementOptions(studio) {
           }
           const value = String(option?.value || option?.label || "").trim();
           const label = String(option?.label || value).trim();
-          return value ? { label: label || value, value } : null;
+          if (!value) return null;
+          // Etiketten översätts, värdet lämnas orört — se kommentaren överst.
+          return {
+            label: translateOptionLabel("placement", option?.builtInKey, label || value, language),
+            value
+          };
         })
         .filter(Boolean)
     : [];
@@ -125,25 +147,6 @@ function addDays(date, amount) {
   return nextDate;
 }
 
-function getMonthLabel(date) {
-  const label = date.toLocaleDateString("sv-SE", { month: "long", year: "numeric" });
-  return label.charAt(0).toUpperCase() + label.slice(1);
-}
-
-function getCalendarGridStart(date) {
-  const gridStart = new Date(date);
-  const weekday = (gridStart.getDay() + 6) % 7;
-  gridStart.setDate(gridStart.getDate() - weekday);
-  return gridStart;
-}
-
-function getCalendarGridEnd(date) {
-  const gridEnd = new Date(date);
-  const weekday = (gridEnd.getDay() + 6) % 7;
-  gridEnd.setDate(gridEnd.getDate() + (6 - weekday));
-  return gridEnd;
-}
-
 function getWeekStart(date) {
   const d = new Date(date);
   const day = (d.getDay() + 6) % 7; // Monday = 0
@@ -152,7 +155,7 @@ function getWeekStart(date) {
   return d;
 }
 
-function buildWeeks(availabilityData) {
+function buildWeeks(availabilityData, { locale, weekdayLabels }) {
   const startDate = parseDateKey(availabilityData?.startDate);
   if (!startDate) return [];
   const availableDates = new Map(
@@ -173,8 +176,8 @@ function buildWeeks(availabilityData) {
         key,
         date: key,
         dayNumber: d.getDate(),
-        weekdayLabel: WEEKDAY_LABELS[i],
-        monthLabel: d.toLocaleDateString("sv-SE", { day: "numeric", month: "short" }),
+        weekdayLabel: weekdayLabels[i],
+        monthLabel: d.toLocaleDateString(locale, { day: "numeric", month: "short" }),
         inRange,
         slots: entry?.slots || [],
         isAvailable: inRange && (entry?.slots?.length || 0) > 0
@@ -186,112 +189,62 @@ function buildWeeks(availabilityData) {
   return weeks;
 }
 
-function getCalendarDayText(day) {
-  if (!day.inCurrentMonth || !day.inLoadedRange) return "";
-  if (day.isAvailable) return day.slotCount === 1 ? "1 tid" : `${day.slotCount} tider`;
-  return "Upptagen";
-}
-
-function getBookingTypeLabel(type) {
-  const labels = {
-    consultation: "Konsultation",
-    tattoo_session: "Tatueringspass",
-    touch_up: "Touch-up"
-  };
-  return labels[type] || type || "";
-}
-
-function buildCalendarMonths(availabilityData) {
-  const startDate = parseDateKey(availabilityData?.startDate);
-  if (!startDate) return [];
-  const availableDates = new Map(
-    (availabilityData?.dates || []).map((dateEntry) => [dateEntry.date, dateEntry])
-  );
-  const daysToShow = Math.max(1, Number.parseInt(String(availabilityData?.days || ""), 10) || 1);
-  const endDate = addDays(startDate, daysToShow - 1);
-  const lastMonthStart = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
-  const months = [];
-  for (
-    let monthCursor = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-    monthCursor.getTime() <= lastMonthStart.getTime();
-    monthCursor = new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 1)
-  ) {
-    const monthStart = new Date(monthCursor.getFullYear(), monthCursor.getMonth(), 1);
-    const monthEnd = new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 0);
-    const gridStart = getCalendarGridStart(monthStart);
-    const gridEnd = getCalendarGridEnd(monthEnd);
-    const days = [];
-    for (
-      let cursor = new Date(gridStart);
-      cursor.getTime() <= gridEnd.getTime();
-      cursor = addDays(cursor, 1)
-    ) {
-      const dateKey = formatDateKey(cursor);
-      const dateEntry = availableDates.get(dateKey) || null;
-      const inLoadedRange =
-        cursor.getTime() >= startDate.getTime() && cursor.getTime() <= endDate.getTime();
-      const inCurrentMonth = cursor.getMonth() === monthStart.getMonth();
-      const slotCount = dateEntry?.slots?.length || 0;
-      days.push({
-        key: dateKey,
-        date: dateKey,
-        dayNumber: cursor.getDate(),
-        label:
-          dateEntry?.label ||
-          cursor.toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" }),
-        inCurrentMonth,
-        inLoadedRange,
-        isAvailable: slotCount > 0,
-        isSelectable: inLoadedRange && inCurrentMonth && slotCount > 0,
-        slotCount
-      });
-    }
-    months.push({
-      key: `${monthStart.getFullYear()}-${String(monthStart.getMonth() + 1).padStart(2, "0")}`,
-      label: getMonthLabel(monthStart),
-      availableDayCount: days.filter((day) => day.isSelectable).length,
-      days
-    });
-  }
-  return months;
-}
-
-function buildSizeOptions(studio) {
+function buildSizeOptions(studio, t) {
   const thresholds = studio?.bookingFlow?.estimatorSummary?.sizeThresholds;
   if (!thresholds) return null;
 
   const { tinyMaxCentimeters, smallMaxCentimeters, mediumMaxCentimeters, largeMaxCentimeters } = thresholds;
 
   // Bygg storleks-tiers utifrån studions cm-trösklar (satta i bokningsreglerna).
-  // Använd labeln som value så att studion ser den beskrivande storleken i CRM:et,
-  // inte bara ett bart cm-tal.
+  //
+  // value = alltid den svenska texten. Backendens estimator matchar "mycket
+  //   liten"/"mellanstor"/"extra stor" som delsträngar — översatta värden gör
+  //   att tidsberäkningen tyst hamnar fel.
+  // label = översatt, det kunden ser.
   const options = [];
+  const push = (key, cm) => {
+    const vars = { cm };
+    options.push({
+      value: interpolateSwedish(key, vars),
+      label: t(`leadForm.${key}`, vars)
+    });
+  };
 
   if (tinyMaxCentimeters > 0) {
-    options.push(`Mycket liten (upp till ${tinyMaxCentimeters} cm)`);
+    push("sizeTiny", tinyMaxCentimeters);
   }
   if (smallMaxCentimeters > 0 && smallMaxCentimeters > tinyMaxCentimeters) {
-    options.push(`Liten (upp till ${smallMaxCentimeters} cm)`);
+    push("sizeSmall", smallMaxCentimeters);
   }
   if (mediumMaxCentimeters > 0 && mediumMaxCentimeters > smallMaxCentimeters) {
-    options.push(`Mellanstor (upp till ${mediumMaxCentimeters} cm)`);
+    push("sizeMedium", mediumMaxCentimeters);
   }
   if (largeMaxCentimeters > 0 && largeMaxCentimeters > mediumMaxCentimeters) {
-    options.push(`Stor (upp till ${largeMaxCentimeters} cm)`);
+    push("sizeLarge", largeMaxCentimeters);
   }
 
   // Största tröskeln som finns blir undre gräns för "extra stor".
   const largestThreshold = [largeMaxCentimeters, mediumMaxCentimeters, smallMaxCentimeters, tinyMaxCentimeters]
     .find((cm) => cm > 0);
-  options.push(
-    largestThreshold
-      ? `Extra stor (över ${largestThreshold} cm)`
-      : "Extra stor / helarm / rygg"
-  );
 
-  return options.length >= 2
-    ? options.map((label) => ({ value: label, label }))
-    : null;
+  if (largestThreshold) {
+    push("sizeExtra", largestThreshold);
+  } else {
+    options.push({
+      value: sv.leadForm.sizeExtraNoThreshold,
+      label: t("leadForm.sizeExtraNoThreshold")
+    });
+  }
+
+  return options.length >= 2 ? options : null;
+}
+
+// Samma {{cm}}-interpolation som t(), men alltid mot den svenska ordboken —
+// används för värden som måste förbli svenska oavsett gränssnittsspråk.
+function interpolateSwedish(key, vars) {
+  return String(sv.leadForm[key] || "").replace(/\{\{(\w+)\}\}/g, (match, name) =>
+    Object.prototype.hasOwnProperty.call(vars, name) ? String(vars[name]) : match
+  );
 }
 
 function hasEnoughDetailsForCalendar(formData) {
@@ -314,30 +267,32 @@ function clearRequestedTimeSelection(currentFormData, requestedDurationMinutes =
   };
 }
 
-function computeFieldError(name, formData) {
+function computeFieldError(name, formData, t) {
   const isConsultation = formData.bookingType === "consultation";
   switch (name) {
     case "tattooStyle":
       if (isConsultation) return "";
-      return !formData.tattooStyle.trim() ? "Fyll i tatueringsstil." : "";
+      return !formData.tattooStyle.trim() ? t("leadForm.errorStyle") : "";
     case "placement":
       if (isConsultation) return "";
-      return !formData.placement.trim() ? "Fyll i placering." : "";
+      return !formData.placement.trim() ? t("leadForm.errorPlacement") : "";
     case "size":
       if (isConsultation) return "";
-      return !formData.size.trim() ? "Fyll i storlek." : "";
+      return !formData.size.trim() ? t("leadForm.errorSize") : "";
     case "description":
       return !formData.description.trim()
-        ? isConsultation ? "Berätta kort vad du vill diskutera." : "Beskriv motiv och önskemål."
+        ? isConsultation
+          ? t("leadForm.errorDescriptionConsultation")
+          : t("leadForm.errorDescriptionTattoo")
         : "";
     case "name":
-      return formData.name.trim().length < 2 ? "Fyll i ditt namn." : "";
+      return formData.name.trim().length < 2 ? t("leadForm.errorName") : "";
     case "email":
       if (!formData.email.trim() && !formData.phone.trim()) {
-        return "Ange minst din e-post eller ditt telefonnummer.";
+        return t("leadForm.errorContact");
       }
       if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-        return "Ange en giltig e-postadress.";
+        return t("leadForm.errorEmail");
       }
       return "";
     default:
@@ -350,6 +305,7 @@ const STEP_CONTACT_FIELDS = ["name", "email"];
 
 // --- PaymentStep: Stripe-kortformulär, renderas inne i <Elements> ---
 function PaymentStep({ amountSek, paymentIntentId, onConfirmed, onCancel, submitting }) {
+  const t = useT();
   const stripe = useStripe();
   const elements = useElements();
   const [payError, setPayError] = useState("");
@@ -366,7 +322,7 @@ function PaymentStep({ amountSek, paymentIntentId, onConfirmed, onCancel, submit
     });
 
     if (error) {
-      setPayError(error.message || "Betalningen misslyckades. Försök igen.");
+      setPayError(error.message || t("leadForm.payFailed"));
       setPaying(false);
       return;
     }
@@ -378,7 +334,7 @@ function PaymentStep({ amountSek, paymentIntentId, onConfirmed, onCancel, submit
         setPaying(false);
       }
     } else {
-      setPayError("Betalningen bekräftades inte. Kontakta studion om beloppet dragits.");
+      setPayError(t("leadForm.payUnconfirmed"));
       setPaying(false);
     }
   }
@@ -386,8 +342,8 @@ function PaymentStep({ amountSek, paymentIntentId, onConfirmed, onCancel, submit
   return (
     <div className="form-payment-step">
       <div className="form-payment-step-header">
-        <strong>Betala {amountSek} kr</strong>
-        <span>Säker betalning via Stripe</span>
+        <strong>{t("leadForm.payHeading", { amount: amountSek })}</strong>
+        <span>{t("leadForm.paySecure")}</span>
       </div>
       <PaymentElement />
       {payError ? <p className="form-payment-step-error">{payError}</p> : null}
@@ -398,7 +354,7 @@ function PaymentStep({ amountSek, paymentIntentId, onConfirmed, onCancel, submit
           onClick={onCancel}
           disabled={paying || submitting}
         >
-          Tillbaka
+          {t("common.back")}
         </button>
         <button
           type="button"
@@ -406,7 +362,9 @@ function PaymentStep({ amountSek, paymentIntentId, onConfirmed, onCancel, submit
           onClick={handlePay}
           disabled={!stripe || paying || submitting}
         >
-          {paying || submitting ? "Bearbetar..." : `Betala ${amountSek} kr`}
+          {paying || submitting
+            ? t("leadForm.payProcessing")
+            : t("leadForm.payButton", { amount: amountSek })}
         </button>
       </div>
     </div>
@@ -420,6 +378,7 @@ export function StudioLeadFormEnhanced({
   successPreviewText = "",
   previewMode = false
 }) {
+  const { t, tList, locale, language } = useLanguage();
   const [formData, setFormData] = useState(() => buildInitialForm());
   const [status, setStatus] = useState({ state: "idle", message: "" });
   const [availability, setAvailability] = useState(() => createAvailabilityState());
@@ -433,21 +392,27 @@ export function StudioLeadFormEnhanced({
   // konsultation, så vi kan förklara varför för kunden.
   const [styleFellBackToConsultation, setStyleFellBackToConsultation] = useState(false);
 
-  const styleOptions = useMemo(() => buildStyleOptions(studio), [studio]);
+  const styleOptions = useMemo(
+    () => buildStyleOptions(studio, tList, language),
+    [studio, tList, language]
+  );
   // Stil-listan för dropdownen: studions stilar + ett "Annat" längst ner som
   // växlar till konsultation.
   const styleSelectOptions = useMemo(
     () => [
       ...styleOptions.map((option) => ({ label: option.label, value: option.value })),
-      { label: "Annat (stilen finns inte)", value: OTHER_STYLE_VALUE, isOther: true }
+      { label: t("leadForm.otherStyle"), value: OTHER_STYLE_VALUE, isOther: true }
     ],
-    [styleOptions]
+    [styleOptions, t]
   );
 
   // Placeringar: dropdown när studion listat sina, annars fritext. "Annat" byter
   // till fritext utan att växla bokningstyp — placeringen påverkar bara ett
   // eventuellt tidspåslag, inte om tiden går att beräkna.
-  const placementOptions = useMemo(() => buildPlacementOptions(studio), [studio]);
+  const placementOptions = useMemo(
+    () => buildPlacementOptions(studio, language),
+    [studio, language]
+  );
   const [showCustomPlacement, setShowCustomPlacement] = useState(false);
   const placementSelectOptions = useMemo(
     () =>
@@ -457,10 +422,10 @@ export function StudioLeadFormEnhanced({
               label: option.label,
               value: option.value
             })),
-            { label: "Annat (skriv själv)", value: OTHER_PLACEMENT_VALUE, isOther: true }
+            { label: t("leadForm.otherPlacement"), value: OTHER_PLACEMENT_VALUE, isOther: true }
           ]
         : [],
-    [placementOptions]
+    [placementOptions, t]
   );
 
   function handlePlacementChange(event) {
@@ -491,11 +456,13 @@ export function StudioLeadFormEnhanced({
 
   const steps = useMemo(() => {
     return [
-      { id: "tattoo", label: "Om tatueringen", heading: "Berätta om din tatuering" },
-      ...(canShowCalendar ? [{ id: "time", label: "Välj tid", heading: "Välj en tid som passar" }] : []),
-      { id: "contact", label: "Dina uppgifter", heading: "Dina kontaktuppgifter" }
+      { id: "tattoo", label: t("leadForm.stepTattooLabel"), heading: t("leadForm.stepTattooHeading") },
+      ...(canShowCalendar
+        ? [{ id: "time", label: t("leadForm.stepTimeLabel"), heading: t("leadForm.stepTimeHeading") }]
+        : []),
+      { id: "contact", label: t("leadForm.stepContactLabel"), heading: t("leadForm.stepContactHeading") }
     ];
-  }, [canShowCalendar]);
+  }, [canShowCalendar, t]);
 
   // Ladda Stripe.js om studion har ett aktivt Connect-konto
   useEffect(() => {
@@ -549,9 +516,10 @@ export function StudioLeadFormEnhanced({
   const isCheckingAvailability = Boolean(
     canShowCalendar && hasEnoughDetails && availability.state === "loading"
   );
+  const weekdayLabels = useMemo(() => tList("leadForm.weekdays"), [tList]);
   const weeks = useMemo(
-    () => buildWeeks(availability.data),
-    [availability.data]
+    () => buildWeeks(availability.data, { locale, weekdayLabels }),
+    [availability.data, locale, weekdayLabels]
   );
   const visibleWeek = useMemo(
     () => weeks[visibleWeekIndex] || null,
@@ -593,7 +561,7 @@ export function StudioLeadFormEnhanced({
     let active = true;
     const timeoutId = setTimeout(() => {
       setAvailability(
-        createAvailabilityState({ state: "loading", message: "Kontrollerar lediga tider..." })
+        createAvailabilityState({ state: "loading", message: t("leadForm.checkingAvailability") })
       );
       previewPublicStudioBooking(studio.slug, {
         tattooStyle: formData.tattooStyle,
@@ -623,7 +591,7 @@ export function StudioLeadFormEnhanced({
           setAvailability(
             createAvailabilityState({
               state: "error",
-              message: error.message || "Det gick inte att kontrollera lediga tider just nu."
+              message: error.message || t("leadForm.availabilityError")
             })
           );
           setFormData((current) => ({
@@ -645,7 +613,8 @@ export function StudioLeadFormEnhanced({
     formData.placement,
     formData.size,
     formData.budget,
-    formData.description
+    formData.description,
+    t
   ]);
 
 
@@ -683,7 +652,7 @@ export function StudioLeadFormEnhanced({
 
   function getFieldError(name) {
     if (!touched.has(name)) return "";
-    return computeFieldError(name, formData);
+    return computeFieldError(name, formData, t);
   }
 
   function handleSlotToggle(slot) {
@@ -716,9 +685,7 @@ export function StudioLeadFormEnhanced({
       setInspirationImage(null);
       // Rensa filväljaren så samma fil kan väljas igen efter ett fel.
       if (fileInputRef.current) fileInputRef.current.value = "";
-      setImageError(
-        error.message || "Det gick inte att förbereda bilden för uppladdning. Försök igen."
-      );
+      setImageError(error.message || t("leadForm.imageError"));
     } finally {
       setImageProcessing(false);
     }
@@ -742,11 +709,11 @@ export function StudioLeadFormEnhanced({
         : STEP_TATTOO_FIELDS;
       const newTouched = new Set([...touched, ...fieldsToValidate]);
       setTouched(newTouched);
-      if (fieldsToValidate.some((f) => computeFieldError(f, formData))) return;
+      if (fieldsToValidate.some((f) => computeFieldError(f, formData, t))) return;
     }
     if (stepId === "time") {
       if (requiresTimeSelection && (!formData.preferredSlots || formData.preferredSlots.length === 0)) {
-        setStatus({ state: "error", message: "Välj minst en ledig tid innan du fortsätter." });
+        setStatus({ state: "error", message: t("leadForm.pickTimeFirst") });
         return;
       }
       setStatus({ state: "idle", message: "" });
@@ -766,6 +733,9 @@ export function StudioLeadFormEnhanced({
     const response = await createPublicStudioLead(studio.slug, {
       ...formData,
       bookingType: formData.bookingType || "tattoo_session",
+      // Språket kunden fyllde i formuläret på — CRM:et markerar leadet så att
+      // studion vet att svara på engelska.
+      language,
       privacyConsent: true,
       marketingConsent: false,
       draftId,
@@ -786,14 +756,13 @@ export function StudioLeadFormEnhanced({
     if (extraPayload.paymentIntentId) {
       setPaymentSuccess({
         amountSek: getPaymentAmount(),
-        studioName: studio?.publicProfile?.name || studio?.name || "studion"
+        studioName:
+          studio?.publicProfile?.name || studio?.name || t("leadForm.paidFallbackStudio")
       });
     } else {
       setStatus({
         state: "success",
-        message:
-          response?.successMessage ||
-          "Tack! Din förfrågan är skickad. Studion återkopplar normalt inom 24 timmar via e-post eller telefon — dygnet runt, alla dagar."
+        message: response?.successMessage || t("leadForm.success")
       });
     }
     setFormData(buildInitialForm());
@@ -813,7 +782,7 @@ export function StudioLeadFormEnhanced({
     if (!hasAcceptedConsent) {
       setStatus({
         state: "error",
-        message: "Godkänn integritetspolicy och villkor för att fortsätta."
+        message: t("leadForm.consentRequired")
       });
       openLegalModal();
       return;
@@ -821,19 +790,17 @@ export function StudioLeadFormEnhanced({
     if (!canSubmit) {
       setStatus({
         state: "error",
-        message:
-          studio?.previewDisabledMessage ||
-          "Den här demosidan är inte kopplad till en riktig studio i CRM ännu."
+        message: studio?.previewDisabledMessage || t("leadForm.previewDisabled")
       });
       return;
     }
     const newTouched = new Set([...touched, ...STEP_CONTACT_FIELDS]);
     setTouched(newTouched);
-    if (STEP_CONTACT_FIELDS.some((f) => computeFieldError(f, formData))) return;
+    if (STEP_CONTACT_FIELDS.some((f) => computeFieldError(f, formData, t))) return;
 
     // Om studion har Stripe Connect aktivt — skapa PaymentIntent och visa betalningsformulär
     if (needsPayment && !paymentReady) {
-      setStatus({ state: "loading", message: "Förbereder betalning..." });
+      setStatus({ state: "loading", message: t("leadForm.payPreparing") });
       try {
         const amountSek = getPaymentAmount();
         const pi = await createStudioPaymentIntent(studio.slug, {
@@ -851,39 +818,39 @@ export function StudioLeadFormEnhanced({
       } catch (error) {
         setStatus({
           state: "error",
-          message: error.message || "Kunde inte starta betalningen. Försök igen."
+          message: error.message || t("leadForm.payStartFailed")
         });
       }
       return;
     }
 
     // Inget Stripe-krav — skicka lead direkt
-    setStatus({ state: "loading", message: "Skickar din förfrågan..." });
+    setStatus({ state: "loading", message: t("leadForm.sending") });
     try {
       await submitLead();
     } catch (error) {
       setStatus({
         state: "error",
-        message: error.message || "Det gick inte att skicka just nu. Försök igen lite senare."
+        message: error.message || t("leadForm.sendFailed")
       });
     }
   }
 
   // Kallas av PaymentStep efter lyckad Stripe-betalning
   const handlePaymentConfirmed = useCallback(async (confirmedPaymentIntentId) => {
-    setStatus({ state: "loading", message: "Registrerar din bokning..." });
+    setStatus({ state: "loading", message: t("leadForm.payRegistering") });
     try {
       await submitLead({ paymentIntentId: confirmedPaymentIntentId });
     } catch (error) {
       setStatus({
         state: "error",
-        message: error.message || "Betalningen gick igenom men bokningen kunde inte sparas. Kontakta studion."
+        message: error.message || t("leadForm.paySavedFailed")
       });
       setPaymentReady(false);
       setPaymentIntentClientSecret(null);
       setPaymentIntentId(null);
     }
-  }, [formData, draftId, inspirationImage, studio]);
+  }, [formData, draftId, inspirationImage, studio, t]);
 
   const stepId = steps[currentStep]?.id;
   const progressPercent = Math.round(((currentStep + 1) / steps.length) * 100);
@@ -897,18 +864,21 @@ export function StudioLeadFormEnhanced({
             <path d="M14 27l8 8 16-16" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
-        <h2 className="payment-confirmed__title">Betalning genomförd</h2>
-        <p className="payment-confirmed__amount">{paymentSuccess.amountSek} kr</p>
+        <h2 className="payment-confirmed__title">{t("leadForm.paidTitle")}</h2>
+        <p className="payment-confirmed__amount">
+          {t("leadForm.paidAmount", { amount: paymentSuccess.amountSek })}
+        </p>
         <p className="payment-confirmed__message">
-          Din förfrågan är skickad till <strong>{paymentSuccess.studioName}</strong> och depositionsavgiften är betald.
-          Du får en bekräftelse via e-post inom kort.
+          {t("leadForm.paidMessageBefore")}
+          <strong>{paymentSuccess.studioName}</strong>
+          {t("leadForm.paidMessageAfter")}
         </p>
         <button
           type="button"
           className="payment-confirmed__btn"
           onClick={() => setPaymentSuccess(null)}
         >
-          Skicka ny förfrågan
+          {t("leadForm.paidNewRequest")}
         </button>
       </div>
     );
@@ -933,28 +903,29 @@ export function StudioLeadFormEnhanced({
       {introText ? <p className="form-note">{introText}</p> : null}
       {previewMode && successPreviewText ? (
         <div>
-          <p className="form-note form-note--compact">
-            Förhandsvisning av tackmeddelandet som visas efter skickad förfrågan
-          </p>
+          <p className="form-note form-note--compact">{t("leadForm.successPreviewNote")}</p>
           <p className="form-status form-status--success" role="status" aria-live="polite">
             {successPreviewText}
           </p>
         </div>
       ) : null}
 
-      <div className="form-progress" aria-label={`Steg ${currentStep + 1} av ${steps.length}`}>
+      <div
+        className="form-progress"
+        aria-label={t("leadForm.progressAria", { current: currentStep + 1, total: steps.length })}
+      >
         <div className="form-progress-bar">
           <div className="form-progress-fill" style={{ width: `${progressPercent}%` }} />
         </div>
         <p className="form-progress-label">
-          <span>Steg {currentStep + 1} av {steps.length}</span>
+          <span>{t("leadForm.progressLabel", { current: currentStep + 1, total: steps.length })}</span>
           <span>{steps[currentStep].label}</span>
         </p>
       </div>
 
       <div className="hidden-trap" aria-hidden="true">
         <label htmlFor="lead-website">
-          Lämna detta fält tomt
+          {t("leadForm.honeypot")}
           <input
             id="lead-website"
             type="text"
@@ -975,22 +946,20 @@ export function StudioLeadFormEnhanced({
               className={`booking-type-btn ${formData.bookingType === "tattoo_session" ? "booking-type-btn--active" : ""}`}
               onClick={() => { setStyleFellBackToConsultation(false); setFormData((c) => ({ ...c, bookingType: "tattoo_session" })); setTouched(new Set()); }}
             >
-              Tatueringsbokning
+              {t("leadForm.typeTattoo")}
             </button>
             <button
               type="button"
               className={`booking-type-btn ${formData.bookingType === "consultation" ? "booking-type-btn--active" : ""}`}
               onClick={() => { setStyleFellBackToConsultation(false); setFormData((c) => ({ ...c, bookingType: "consultation" })); setTouched(new Set()); }}
             >
-              Konsultation
+              {t("leadForm.typeConsultation")}
             </button>
           </div>
 
           {formData.bookingType === "consultation" && styleFellBackToConsultation && (
             <p className="booking-type-note" role="status">
-              Stilen du sökte finns inte bland studions valbara stilar, så vi har
-              växlat till en konsultation. Beskriv vad du vill ha så återkommer
-              studion med ett förslag.{" "}
+              {t("leadForm.fallbackNote")}{" "}
               <button
                 type="button"
                 className="field-inline-action"
@@ -1003,7 +972,7 @@ export function StudioLeadFormEnhanced({
                   }));
                 }}
               >
-                Tillbaka till stilarna
+                {t("leadForm.fallbackBack")}
               </button>
             </p>
           )}
@@ -1014,7 +983,7 @@ export function StudioLeadFormEnhanced({
               htmlFor="lead-style"
               className={getFieldError("tattooStyle") ? "has-error" : ""}
             >
-              Stil <span className="field-required">*</span>
+              {t("leadForm.styleLabel")} <span className="field-required">*</span>
               <CustomSelect
                 id="lead-style"
                 name="tattooStyle"
@@ -1022,7 +991,7 @@ export function StudioLeadFormEnhanced({
                 onChange={handleStyleChange}
                 onBlur={handleBlur}
                 options={styleSelectOptions}
-                placeholder="Välj stil..."
+                placeholder={t("leadForm.stylePlaceholder")}
                 ariaInvalid={!!getFieldError("tattooStyle")}
                 nativeClassName="booking-form"
               />
@@ -1035,7 +1004,7 @@ export function StudioLeadFormEnhanced({
               htmlFor="lead-placement"
               className={getFieldError("placement") ? "has-error" : ""}
             >
-              Placering <span className="field-required">*</span>
+              {t("leadForm.placementLabel")} <span className="field-required">*</span>
               {placementSelectOptions.length && !showCustomPlacement ? (
                 <CustomSelect
                   id="lead-placement"
@@ -1044,7 +1013,7 @@ export function StudioLeadFormEnhanced({
                   onChange={handlePlacementChange}
                   onBlur={handleBlur}
                   options={placementSelectOptions}
-                  placeholder="Välj placering..."
+                  placeholder={t("leadForm.placementPlaceholder")}
                   ariaInvalid={!!getFieldError("placement")}
                   nativeClassName="booking-form"
                 />
@@ -1054,7 +1023,7 @@ export function StudioLeadFormEnhanced({
                     id="lead-placement"
                     type="text"
                     name="placement"
-                    placeholder="Arm, rygg, ben..."
+                    placeholder={t("leadForm.placementFreeText")}
                     value={formData.placement}
                     onChange={handleChange}
                     onBlur={handleBlur}
@@ -1070,7 +1039,7 @@ export function StudioLeadFormEnhanced({
                         setFormData((current) => ({ ...current, placement: "" }));
                       }}
                     >
-                      Välj från listan i stället
+                      {t("leadForm.placementUseList")}
                     </button>
                   ) : null}
                 </>
@@ -1081,9 +1050,9 @@ export function StudioLeadFormEnhanced({
             </label>
 
             <label htmlFor="lead-size" className={getFieldError("size") ? "has-error" : ""}>
-              Storlek <span className="field-required">*</span>
+              {t("leadForm.sizeLabel")} <span className="field-required">*</span>
               {(() => {
-                const sizeOptions = buildSizeOptions(studio);
+                const sizeOptions = buildSizeOptions(studio, t);
                 if (sizeOptions) {
                   return (
                     <CustomSelect
@@ -1093,7 +1062,7 @@ export function StudioLeadFormEnhanced({
                       onChange={handleChange}
                       onBlur={handleBlur}
                       options={sizeOptions}
-                      placeholder="Välj storlek..."
+                      placeholder={t("leadForm.sizePlaceholder")}
                       ariaInvalid={!!getFieldError("size")}
                       nativeClassName="booking-form"
                     />
@@ -1104,7 +1073,7 @@ export function StudioLeadFormEnhanced({
                     id="lead-size"
                     type="text"
                     name="size"
-                    placeholder="Liten, medium eller i cm"
+                    placeholder={t("leadForm.sizeFreeText")}
                     value={formData.size}
                     onChange={handleChange}
                     onBlur={handleBlur}
@@ -1118,12 +1087,12 @@ export function StudioLeadFormEnhanced({
             </label>
 
             <label htmlFor="lead-budget">
-              Budget
+              {t("leadForm.budgetLabel")}
               <input
                 id="lead-budget"
                 type="text"
                 name="budget"
-                placeholder="T.ex. 3000-5000 kr"
+                placeholder={t("leadForm.budgetPlaceholder")}
                 value={formData.budget}
                 onChange={handleChange}
               />
@@ -1136,16 +1105,16 @@ export function StudioLeadFormEnhanced({
             className={getFieldError("description") ? "has-error" : ""}
           >
             {formData.bookingType === "consultation"
-              ? <>Vad vill du diskutera? <span className="field-required">*</span></>
-              : <>Berätta om din tatuering <span className="field-required">*</span></>}
+              ? <>{t("leadForm.descriptionConsultation")} <span className="field-required">*</span></>
+              : <>{t("leadForm.descriptionTattoo")} <span className="field-required">*</span></>}
             <textarea
               id="lead-description"
               name="description"
               rows="5"
               placeholder={
                 formData.bookingType === "consultation"
-                  ? "Berätta kort om din idé, dina frågor eller vad du vill gå igenom under konsultationen."
-                  : "Beskriv motiv, känsla, referenser och allt som är viktigt för studion att veta."
+                  ? t("leadForm.descriptionPlaceholderConsultation")
+                  : t("leadForm.descriptionPlaceholderTattoo")
               }
               value={formData.description}
               onChange={handleChange}
@@ -1159,7 +1128,7 @@ export function StudioLeadFormEnhanced({
 
           <div className="studio-lead-form__upload">
             <label htmlFor="lead-image">
-              Inspirationsbild
+              {t("leadForm.imageLabel")}
               <input
                 ref={fileInputRef}
                 id="lead-image"
@@ -1171,22 +1140,21 @@ export function StudioLeadFormEnhanced({
               />
             </label>
             <p id="lead-image-hint" className="form-note form-note--compact">
-              Valfritt. Ladda upp en bild om du vill visa stil, motiv eller referens tydligare.
-              JPG, PNG eller WEBP, max {MAX_INSPIRATION_IMAGE_MB} MB.
+              {t("leadForm.imageHint", { max: MAX_INSPIRATION_IMAGE_MB })}
             </p>
             {imageProcessing ? (
-              <p className="form-status form-status--muted">Bearbetar bilden...</p>
+              <p className="form-status form-status--muted">{t("leadForm.imageProcessing")}</p>
             ) : null}
             {imageError ? (
               <p className="form-status form-status--error" role="alert">{imageError}</p>
             ) : null}
             {inspirationImage ? (
               <div className="upload-preview">
-                <img src={inspirationImage.previewUrl} alt="Förhandsvisning av inspirationsbild" />
+                <img src={inspirationImage.previewUrl} alt={t("leadForm.imagePreviewAlt")} />
                 <div className="upload-preview__meta">
                   <span>{inspirationImage.fileName}</span>
                   <button className="btn btn-secondary" type="button" onClick={handleRemoveImage}>
-                    Ta bort bild
+                    {t("leadForm.imageRemove")}
                   </button>
                 </div>
               </div>
@@ -1195,7 +1163,7 @@ export function StudioLeadFormEnhanced({
 
           <div className="form-step-nav">
             <button className="btn btn-primary" type="button" onClick={handleNext}>
-              Nästa steg
+              {t("common.next")}
             </button>
           </div>
         </div>
@@ -1204,7 +1172,7 @@ export function StudioLeadFormEnhanced({
       {stepId === "time" && (
         <div className="form-step">
           {isCheckingAvailability ? (
-            <p className="form-status form-status--muted">Kontrollerar lediga tider...</p>
+            <p className="form-status form-status--muted">{t("leadForm.checkingAvailability")}</p>
           ) : null}
           {availability.state === "error" ? (
             <p className="form-status form-status--error">{availability.message}</p>
@@ -1220,7 +1188,7 @@ export function StudioLeadFormEnhanced({
                       type="button"
                       onClick={() => setVisibleWeekIndex((i) => i - 1)}
                       disabled={visibleWeekIndex === 0}
-                      aria-label="Föregående vecka"
+                      aria-label={t("leadForm.prevWeek")}
                     >
                       ‹
                     </button>
@@ -1232,7 +1200,7 @@ export function StudioLeadFormEnhanced({
                       type="button"
                       onClick={() => setVisibleWeekIndex((i) => i + 1)}
                       disabled={visibleWeekIndex >= weeks.length - 1}
-                      aria-label="Nästa vecka"
+                      aria-label={t("leadForm.nextWeek")}
                     >
                       ›
                     </button>
@@ -1275,13 +1243,17 @@ export function StudioLeadFormEnhanced({
               {(formData.preferredSlots || []).length > 0 ? (
                 <div className="studio-booking-picker__summary">
                   <div>
-                    <strong>Vald tid</strong>
+                    <strong>{t("leadForm.selectedTime")}</strong>
                     <span>
                       {(() => {
                         const s = formData.preferredSlots[0];
                         const d = new Date(s.startTime);
-                        const dateStr = d.toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" });
-                        return `${dateStr} kl. ${s.label}`;
+                        const dateStr = d.toLocaleDateString(locale, {
+                          weekday: "long",
+                          day: "numeric",
+                          month: "long"
+                        });
+                        return t("leadForm.selectedTimeValue", { date: dateStr, time: s.label });
                       })()}
                     </span>
                   </div>
@@ -1299,7 +1271,7 @@ export function StudioLeadFormEnhanced({
 
           <div className="form-step-nav">
             <button className="btn btn-secondary" type="button" onClick={handleBack}>
-              Tillbaka
+              {t("common.back")}
             </button>
             <button
               className="btn btn-primary"
@@ -1317,12 +1289,12 @@ export function StudioLeadFormEnhanced({
         <div className="form-step">
           <div className="form-grid">
             <label htmlFor="lead-name" className={getFieldError("name") ? "has-error" : ""}>
-              Namn <span className="field-required">*</span>
+              {t("leadForm.nameLabel")} <span className="field-required">*</span>
               <input
                 id="lead-name"
                 type="text"
                 name="name"
-                placeholder="Ditt namn"
+                placeholder={t("leadForm.namePlaceholder")}
                 value={formData.name}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -1335,12 +1307,12 @@ export function StudioLeadFormEnhanced({
             </label>
 
             <label htmlFor="lead-email" className={getFieldError("email") ? "has-error" : ""}>
-              E-post
+              {t("leadForm.emailLabel")}
               <input
                 id="lead-email"
                 type="email"
                 name="email"
-                placeholder="namn@mail.online"
+                placeholder={t("leadForm.emailPlaceholder")}
                 value={formData.email}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -1352,12 +1324,12 @@ export function StudioLeadFormEnhanced({
             </label>
 
             <label htmlFor="lead-phone">
-              Telefonnummer
+              {t("leadForm.phoneLabel")}
               <input
                 id="lead-phone"
                 type="tel"
                 name="phone"
-                placeholder="070-000 00 00"
+                placeholder={t("leadForm.phonePlaceholder")}
                 value={formData.phone}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -1369,20 +1341,18 @@ export function StudioLeadFormEnhanced({
             <div className="form-payment-notice">
               {studio.payment.depositRequired ? (
                 <p>
-                  <strong>Deposition krävs:</strong> {studio.payment.depositAmountSek} kr betalas
-                  vid bokning och räknas av mot slutpriset.
+                  <strong>{t("leadForm.depositLabel")}</strong>{" "}
+                  {t("leadForm.depositText", { amount: studio.payment.depositAmountSek })}
                 </p>
               ) : null}
               {studio.payment.bookingFeeEnabled ? (
                 <p>
-                  <strong>Bokningsavgift:</strong> {studio.payment.bookingFeeAmountSek} kr är en
-                  administrativ avgift som betalas vid bokning och räknas inte av mot slutpriset.
+                  <strong>{t("leadForm.feeLabel")}</strong>{" "}
+                  {t("leadForm.feeText", { amount: studio.payment.bookingFeeAmountSek })}
                 </p>
               ) : null}
               {studio.payment.stripeConnectReady ? (
-                <p className="form-payment-notice-stripe">
-                  Betalning sker säkert via Stripe direkt till studion.
-                </p>
+                <p className="form-payment-notice-stripe">{t("leadForm.stripeNote")}</p>
               ) : null}
             </div>
           ) : null}
@@ -1408,9 +1378,7 @@ export function StudioLeadFormEnhanced({
           <FormLegalLinks />
 
           {!canSubmit ? (
-            <p className="form-status form-status--muted">
-              Preview-läge: koppla sidan till en CRM-slug för att testa att skicka riktiga leads.
-            </p>
+            <p className="form-status form-status--muted">{t("leadForm.previewNotice")}</p>
           ) : null}
 
           {status.message ? (
@@ -1436,10 +1404,12 @@ export function StudioLeadFormEnhanced({
                 disabled={status.state === "loading" || imageProcessing || !canSubmit}
               >
                 {status.state === "loading"
-                  ? needsPayment ? "Förbereder betalning..." : "Skickar..."
+                  ? needsPayment
+                    ? t("leadForm.payPreparing")
+                    : t("leadForm.submitting")
                   : needsPayment
-                    ? `Gå till betalning — ${getPaymentAmount()} kr`
-                    : "Skicka förfrågan"}
+                    ? t("leadForm.payToPayment", { amount: getPaymentAmount() })
+                    : t("leadForm.submit")}
               </button>
             </div>
           ) : null}

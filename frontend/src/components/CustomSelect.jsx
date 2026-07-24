@@ -19,7 +19,9 @@ export function CustomSelect({
   onChange,
   onBlur,
   options,
-  placeholder = "Välj...",
+  // Anropare skickar alltid en översatt placeholder; den här är bara ett
+  // sista skyddsnät om någon glömmer.
+  placeholder = "…",
   ariaInvalid = false,
   ariaLabelledBy,
   id,

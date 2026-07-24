@@ -1,9 +1,13 @@
+import { useT } from "../i18n/LanguageContext";
+
 export function LegalConsentPrompt({
   isOpen,
   onAccept,
   onDecline,
   onOpenDocument
 }) {
+  const t = useT();
+
   if (!isOpen) {
     return null;
   }
@@ -11,12 +15,9 @@ export function LegalConsentPrompt({
   return (
     <aside className="legal-modal" role="dialog" aria-labelledby="legal-consent-title">
       <div className="legal-modal__card">
-        <p className="eyebrow">Samtycke</p>
-        <h2 id="legal-consent-title">Godkänner du våra villkor?</h2>
-        <p className="legal-modal__lead">
-          För att använda formulären behöver du godkänna vår integritetspolicy och våra
-          användarvillkor.
-        </p>
+        <p className="eyebrow">{t("consent.eyebrow")}</p>
+        <h2 id="legal-consent-title">{t("consent.title")}</h2>
+        <p className="legal-modal__lead">{t("consent.lead")}</p>
 
         <div className="legal-modal__links">
           <button
@@ -24,23 +25,23 @@ export function LegalConsentPrompt({
             type="button"
             onClick={() => onOpenDocument("privacy")}
           >
-            Integritetspolicy
+            {t("consent.privacy")}
           </button>
           <button
             className="legal-note__button"
             type="button"
             onClick={() => onOpenDocument("terms")}
           >
-            Användarvillkor
+            {t("consent.terms")}
           </button>
         </div>
 
         <div className="legal-modal__actions">
           <button className="btn btn-primary" type="button" onClick={onDecline}>
-            Icke godkänn
+            {t("consent.decline")}
           </button>
           <button className="btn btn-secondary" type="button" onClick={onAccept}>
-            Godkänn
+            {t("consent.accept")}
           </button>
         </div>
       </div>

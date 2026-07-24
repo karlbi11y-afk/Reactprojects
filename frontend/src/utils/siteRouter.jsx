@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useServerLocation } from "./ServerLocationContext";
+import { useLanguage } from "../i18n/LanguageContext";
 
 function normalizePathname(pathname) {
   const normalized = pathname.replace(/\/+$/, "");
@@ -87,7 +88,15 @@ export function useSiteLocation() {
   return location;
 }
 
+/**
+ * Intern länk. Hrefs skrivs alltid på svenska ("/studios") och prefixas här med
+ * aktivt språk ("/en/studios"), så ingen anropare behöver tänka på språket.
+ * Externa länkar, mailto/tel och rena hash-länkar lämnas orörda.
+ */
 export function SiteLink({ href, onClick, target, rel, ...props }) {
+  const { localizePath } = useLanguage();
+  const localizedHref = localizePath(href);
+
   function handleClick(event) {
     onClick?.(event);
 
@@ -103,15 +112,15 @@ export function SiteLink({ href, onClick, target, rel, ...props }) {
       return;
     }
 
-    const nextUrl = new URL(href, window.location.href);
+    const nextUrl = new URL(localizedHref, window.location.href);
 
     if (nextUrl.origin !== window.location.origin) {
       return;
     }
 
     event.preventDefault();
-    navigateTo(href);
+    navigateTo(localizedHref);
   }
 
-  return <a href={href} onClick={handleClick} target={target} rel={rel} {...props} />;
+  return <a href={localizedHref} onClick={handleClick} target={target} rel={rel} {...props} />;
 }

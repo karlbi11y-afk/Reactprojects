@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useT } from "../i18n/LanguageContext";
 
 /**
  * RollingGallery
@@ -14,6 +15,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * Förstarender är alltid statiskt läge, så hydrering matchar.
  */
 export function RollingGallery({ images = [], studioName = "" }) {
+  const t = useT();
   const list = images.filter(Boolean);
   const viewportRef = useRef(null);
   const trackRef = useRef(null);
@@ -207,11 +209,16 @@ export function RollingGallery({ images = [], studioName = "" }) {
       className="rg-card"
       data-idx={i}
       onClick={openAt(i)}
-      aria-label={`Öppna bild ${i + 1} av ${count}`}
+      aria-label={t("gallery.openImage", { index: i + 1, total: count })}
       tabIndex={clone ? -1 : 0}
       aria-hidden={clone ? "true" : undefined}
     >
-      <img src={url} alt={`${studioName} – tatuering ${i + 1}`} loading="lazy" draggable="false" />
+      <img
+        src={url}
+        alt={t("gallery.imageAlt", { studio: studioName, index: i + 1 })}
+        loading="lazy"
+        draggable="false"
+      />
     </button>
   );
 
@@ -232,7 +239,7 @@ export function RollingGallery({ images = [], studioName = "" }) {
 
       <div className="rg-cta-row">
         <button type="button" className="rg-portfolio-link" onClick={() => setPortfolioOpen(true)}>
-          Se hela portföljen
+          {t("gallery.seePortfolio")}
           <span className="rg-arrow" aria-hidden="true">→</span>
         </button>
       </div>
@@ -243,18 +250,23 @@ export function RollingGallery({ images = [], studioName = "" }) {
           className="rg-overlay"
           role="dialog"
           aria-modal="true"
-          aria-label={`Portfölj – ${studioName}`}
+          aria-label={t("gallery.portfolioAria", { studio: studioName })}
           onClick={(e) => {
             if (e.target === e.currentTarget) setPortfolioOpen(false);
           }}
         >
-          <button className="rg-overlay-close" type="button" onClick={() => setPortfolioOpen(false)} aria-label="Stäng portföljen">
+          <button
+            className="rg-overlay-close"
+            type="button"
+            onClick={() => setPortfolioOpen(false)}
+            aria-label={t("gallery.closePortfolio")}
+          >
             ✕
           </button>
           <div className="rg-portfolio">
-            <p className="rg-portfolio-eyebrow">Portfölj</p>
+            <p className="rg-portfolio-eyebrow">{t("gallery.portfolioEyebrow")}</p>
             <h3 className="rg-portfolio-title">{studioName}</h3>
-            <p className="rg-portfolio-sub">Klicka på en bild för att se den i närbild.</p>
+            <p className="rg-portfolio-sub">{t("gallery.portfolioSub")}</p>
             <div className="rg-portfolio-grid">
               {list.map((url, i) => (
                 <button
@@ -262,9 +274,13 @@ export function RollingGallery({ images = [], studioName = "" }) {
                   type="button"
                   className="rg-card rg-card--grid"
                   onClick={() => setLightbox(i)}
-                  aria-label={`Öppna bild ${i + 1} av ${count}`}
+                  aria-label={t("gallery.openImage", { index: i + 1, total: count })}
                 >
-                  <img src={url} alt={`${studioName} – tatuering ${i + 1}`} loading="lazy" />
+                  <img
+                    src={url}
+                    alt={t("gallery.imageAlt", { studio: studioName, index: i + 1 })}
+                    loading="lazy"
+                  />
                 </button>
               ))}
             </div>
@@ -278,27 +294,45 @@ export function RollingGallery({ images = [], studioName = "" }) {
           className="rg-overlay rg-overlay--lightbox"
           role="dialog"
           aria-modal="true"
-          aria-label={`Bild ${lightbox + 1} av ${count}`}
+          aria-label={t("gallery.lightboxAria", { index: lightbox + 1, total: count })}
           onClick={(e) => {
             if (e.target === e.currentTarget) setLightbox(null);
           }}
         >
-          <button className="rg-overlay-close" type="button" onClick={() => setLightbox(null)} aria-label="Stäng">
+          <button
+            className="rg-overlay-close"
+            type="button"
+            onClick={() => setLightbox(null)}
+            aria-label={t("gallery.close")}
+          >
             ✕
           </button>
           {count > 1 ? (
-            <button className="rg-lb-nav rg-lb-prev" type="button" onClick={() => step(-1)} aria-label="Föregående bild">
+            <button
+              className="rg-lb-nav rg-lb-prev"
+              type="button"
+              onClick={() => step(-1)}
+              aria-label={t("gallery.prevImage")}
+            >
               ‹
             </button>
           ) : null}
           <figure className="rg-lb-figure">
-            <img src={list[lightbox]} alt={`${studioName} – tatuering ${lightbox + 1}`} />
+            <img
+              src={list[lightbox]}
+              alt={t("gallery.imageAlt", { studio: studioName, index: lightbox + 1 })}
+            />
             <figcaption className="rg-lb-counter">
               {lightbox + 1} / {count}
             </figcaption>
           </figure>
           {count > 1 ? (
-            <button className="rg-lb-nav rg-lb-next" type="button" onClick={() => step(1)} aria-label="Nästa bild">
+            <button
+              className="rg-lb-nav rg-lb-next"
+              type="button"
+              onClick={() => step(1)}
+              aria-label={t("gallery.nextImage")}
+            >
               ›
             </button>
           ) : null}

@@ -14,6 +14,9 @@ import { studioRegistry } from "./pages/studios";
 import { ThemedStudioPage } from "./pages/studios/ThemedStudioPage";
 import { useSiteLocation } from "./utils/siteRouter";
 import { useScrollReveal } from "./utils/useScrollReveal";
+import { LanguageProvider } from "./i18n/LanguageContext";
+import { splitLanguageFromPath } from "./i18n/config";
+import { LanguageHint } from "./components/LanguageHint";
 
 function getPageFromPath(pathname) {
   if (pathname === "/") {
@@ -105,10 +108,7 @@ function getPageFromPath(pathname) {
   };
 }
 
-function AppContent() {
-  const location = useSiteLocation();
-  const page = getPageFromPath(location.pathname);
-
+function AppContent({ page }) {
   useScrollReveal();
 
   return (
@@ -116,14 +116,23 @@ function AppContent() {
       {!page.hideHeader && <SiteHeader currentPath={page.currentPath} />}
       <main>{page.element}</main>
       <SiteFooter />
+      <LanguageHint />
     </div>
   );
 }
 
 export default function App() {
+  const location = useSiteLocation();
+  // Språket ligger som prefix i URL:en ("/en/studios"). Resten av appen ser
+  // bara den språkfria sökvägen, så rutterna finns bara i en uppsättning.
+  const { language, path } = splitLanguageFromPath(location.pathname);
+  const page = getPageFromPath(path);
+
   return (
-    <LegalConsentProvider>
-      <AppContent />
-    </LegalConsentProvider>
+    <LanguageProvider language={language} path={path}>
+      <LegalConsentProvider>
+        <AppContent page={page} />
+      </LegalConsentProvider>
+    </LanguageProvider>
   );
 }

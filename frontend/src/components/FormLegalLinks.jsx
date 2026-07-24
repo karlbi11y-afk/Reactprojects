@@ -1,25 +1,27 @@
 import { useLegalConsent } from "../contexts/LegalConsentContext";
+import { useT } from "../i18n/LanguageContext";
 
 export function FormLegalLinks() {
   const { openLegalDocument } = useLegalConsent();
+  const t = useT();
 
   return (
     <p className="legal-note">
-      Genom att fortsätta godkänner du vår{" "}
+      {t("consent.notePrefix")}{" "}
       <button
         className="legal-note__button"
         type="button"
         onClick={() => openLegalDocument("privacy")}
       >
-        integritetspolicy
+        {t("consent.notePrivacy")}
       </button>{" "}
-      och våra{" "}
+      {t("consent.noteMiddle")}{" "}
       <button
         className="legal-note__button"
         type="button"
         onClick={() => openLegalDocument("terms")}
       >
-        användarvillkor
+        {t("consent.noteTerms")}
       </button>
       .
     </p>
