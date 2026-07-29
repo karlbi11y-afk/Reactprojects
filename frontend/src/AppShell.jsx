@@ -9,6 +9,7 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 import { StudioCrmPreviewPage } from "./pages/StudioCrmPreviewPage";
 import { StudioProfilePage } from "./pages/StudioProfilePage";
 import { StudiosDirectoryPage } from "./pages/StudiosDirectoryPage";
+import { SlotOfferPage } from "./pages/SlotOfferPage";
 import { TrialPage } from "./pages/TrialPage";
 import { studioRegistry } from "./pages/studios";
 import { ThemedStudioPage } from "./pages/studios/ThemedStudioPage";
@@ -73,6 +74,20 @@ function getPageFromPath(pathname) {
     };
   }
 
+  // Erbjudande om en ledig tid, från SMS-länk. Header och footer döljs — den
+  // som öppnar länken står med mobilen och ska bara svara ja eller nej, inte
+  // navigera runt på sajten.
+  const slotOfferMatch = pathname.match(/^\/tid\/([^/]+)$/);
+
+  if (slotOfferMatch) {
+    return {
+      currentPath: pathname,
+      element: <SlotOfferPage token={decodeURIComponent(slotOfferMatch[1])} />,
+      hideHeader: true,
+      hideFooter: true
+    };
+  }
+
   const studioPreviewMatch = pathname.match(/^\/studio-preview(?:\/([^/]+))?$/);
 
   if (studioPreviewMatch) {
@@ -115,7 +130,7 @@ function AppContent({ page }) {
     <div>
       {!page.hideHeader && <SiteHeader currentPath={page.currentPath} />}
       <main>{page.element}</main>
-      <SiteFooter />
+      {!page.hideFooter && <SiteFooter />}
       <LanguageHint />
     </div>
   );

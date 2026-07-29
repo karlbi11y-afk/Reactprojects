@@ -4362,3 +4362,118 @@ html.has-reveal .steps[data-reveal]:not([data-revealed])::before {
     transform: none !important;
   }
 }
+
+/* ── Erbjudande om ledig tid (SMS-länk, /tid/:token) ──
+   Öppnas på mobil av någon som har bråttom: en tid, en knapp, inget mer.
+   Egen full-height-yta eftersom header och footer är dolda på rutten. */
+.slot-offer {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: linear-gradient(160deg, var(--lav-50), var(--snow) 60%);
+}
+
+.slot-offer__loading {
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.slot-offer__card {
+  width: min(30rem, 100%);
+  background: var(--snow);
+  border: 1px solid var(--glass-border);
+  border-radius: 1.25rem;
+  box-shadow: var(--shadow);
+  padding: 2rem 1.75rem;
+  text-align: center;
+}
+
+.slot-offer__eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.slot-offer__title {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+  color: var(--ink-900);
+}
+
+/* Tiden är det enda kunden egentligen behöver läsa. */
+.slot-offer__time {
+  margin: 0 0 0.35rem;
+  font-size: 1.6rem;
+  line-height: 1.25;
+  font-weight: 700;
+  color: var(--ink-700);
+}
+
+.slot-offer__meta {
+  margin: 0 0 1.5rem;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.slot-offer__button {
+  width: 100%;
+  padding: 1rem 1.25rem;
+  border: none;
+  border-radius: 0.85rem;
+  background: var(--accent);
+  color: var(--snow);
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.18s var(--ease-out-quart), opacity 0.18s ease;
+}
+
+.slot-offer__button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.slot-offer__button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.slot-offer__note {
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.slot-offer__note--warning {
+  color: var(--danger-text);
+  font-weight: 500;
+}
+
+.slot-offer__card--done {
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.slot-offer__check {
+  width: 3rem;
+  height: 3rem;
+  margin: 0 auto 1rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--success-bg);
+  color: var(--success-text);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slot-offer__button {
+    transition: none;
+  }
+  .slot-offer__button:hover:not(:disabled) {
+    transform: none;
+  }
+}

@@ -137,3 +137,17 @@ export function saveStrategyCallDraft(payload) {
     body: JSON.stringify(payload || {})
   });
 }
+
+// ── Luckåtervinning: kunden klickar på länken i erbjudande-SMS:et ────────────
+// Token i länken är hela autentiseringen — därför skickas den aldrig vidare
+// någon annanstans, och svaret innehåller bara mottagarens egen information.
+
+export function getSlotOffer(token) {
+  return request(`/api/public/slot-offers/${encodeURIComponent(token)}`);
+}
+
+export function acceptSlotOffer(token) {
+  return request(`/api/public/slot-offers/${encodeURIComponent(token)}/accept`, {
+    method: "POST"
+  });
+}

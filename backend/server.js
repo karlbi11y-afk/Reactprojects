@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import { CRM_API_BASE_URL } from "./utils/crmClient.js";
 import { publicStudioRouter } from "./routes/publicStudioRoutes.js";
+import { slotOfferRouter } from "./routes/slotOfferRoutes.js";
 import { salesRouter } from "./routes/salesRoutes.js";
 
 if (process.env.NODE_ENV === "production") {
@@ -63,6 +64,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api/public/studios", publicStudioRouter);
+app.use("/api/public/slot-offers", slotOfferRouter);
 app.use("/api", salesRouter);
 
 app.get("/sitemap.xml", async (_req, res) => {
