@@ -1944,13 +1944,20 @@ h1 {
   background-size: cover;
 }
 
-/* Bildlagret skjuter ut 8 % åt varje håll så att fokusreglagen alltid har
-   spelrum. Utan överskjut är en axel flush (cover) och det reglaget gör inget. */
+/* background-size:cover gör exakt en axel flush, och på den axeln kan
+   background-position inte panorera någonting alls — spelrummet finns inte.
+   Att göra lagret större hjälper inte, för cover fyller bara om det.
+   Lösningen är att i stället flytta det synliga utsnittet: lagret zoomas 16 %
+   med transform-origin i fokuspunkten, så den valda kanten står stilla och
+   resten växer bort från den. Det ger rörelse på BÅDA axlarna oavsett
+   bildens proportioner, och på slack-axeln drar background-position åt samma
+   håll så effekterna förstärker varandra. */
 .page-hero__media {
   position: absolute;
-  inset: -8%;
+  inset: 0;
   background-size: cover;
   background-repeat: no-repeat;
+  transform: scale(1.16);
   z-index: 0;
 }
 

@@ -358,18 +358,18 @@ export function StudioProfilePage({ slug = "", studioOverride = null, previewMod
   return (
     <div>
       <section className={`page-hero page-hero--studio page-hero--studio-${heroHeight}`}>
-        {/* Bilden ligger i ett eget lager som är något större än sektionen. Med enbart
-            background-size:cover är exakt en axel flush mot kanten, och på den axeln
-            blir fokusreglaget en tyst no-op — vilken axel det drabbar beror på hur
-            hög heron råkar vara (bred desktop = lodrätt fungerar, smal preview/mobil =
-            vågrätt fungerar). Överskjutet ger spelrum åt båda hållen alltid. */}
+        {/* Fokuspunkten styr två saker: background-position (som bara biter på den
+            axel där bilden faktiskt sticker ut) och transform-origin för zoomen i
+            CSS:en (som biter på den flush-axel där background-position är verkningslös).
+            Tillsammans ger de rörelse på båda axlarna oavsett bildens proportioner. */}
         {studio.heroImageUrl ? (
           <>
             <div
               className="page-hero__media"
               style={{
                 backgroundImage: `url(${studio.heroImageUrl})`,
-                backgroundPosition: `${heroFocusX}% ${heroFocusY}%`
+                backgroundPosition: `${heroFocusX}% ${heroFocusY}%`,
+                transformOrigin: `${heroFocusX}% ${heroFocusY}%`
               }}
             />
             <div
