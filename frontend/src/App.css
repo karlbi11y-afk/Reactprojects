@@ -1938,8 +1938,31 @@ h1 {
 .page-hero--directory .container > .lead { animation-delay: 0.2s; }
 
 .page-hero--studio {
+  position: relative;
+  overflow: hidden;
   background-position: center;
   background-size: cover;
+}
+
+/* Bildlagret skjuter ut 8 % åt varje håll så att fokusreglagen alltid har
+   spelrum. Utan överskjut är en axel flush (cover) och det reglaget gör inget. */
+.page-hero__media {
+  position: absolute;
+  inset: -8%;
+  background-size: cover;
+  background-repeat: no-repeat;
+  z-index: 0;
+}
+
+.page-hero__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.page-hero--studio > .container {
+  position: relative;
+  z-index: 2;
 }
 
 .lead--dark {

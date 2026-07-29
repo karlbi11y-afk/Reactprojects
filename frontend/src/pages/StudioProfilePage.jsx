@@ -357,22 +357,32 @@ export function StudioProfilePage({ slug = "", studioOverride = null, previewMod
 
   return (
     <div>
-      <section
-        className={`page-hero page-hero--studio page-hero--studio-${heroHeight}`}
-        style={
-          studio.heroImageUrl
-            ? {
+      <section className={`page-hero page-hero--studio page-hero--studio-${heroHeight}`}>
+        {/* Bilden ligger i ett eget lager som är något större än sektionen. Med enbart
+            background-size:cover är exakt en axel flush mot kanten, och på den axeln
+            blir fokusreglaget en tyst no-op — vilken axel det drabbar beror på hur
+            hög heron råkar vara (bred desktop = lodrätt fungerar, smal preview/mobil =
+            vågrätt fungerar). Överskjutet ger spelrum åt båda hållen alltid. */}
+        {studio.heroImageUrl ? (
+          <>
+            <div
+              className="page-hero__media"
+              style={{
+                backgroundImage: `url(${studio.heroImageUrl})`,
+                backgroundPosition: `${heroFocusX}% ${heroFocusY}%`
+              }}
+            />
+            <div
+              className="page-hero__scrim"
+              style={{
                 backgroundImage: `linear-gradient(rgba(10, 26, 47, ${Math.max(
                   0,
                   heroOverlay - 0.1
-                ).toFixed(2)}), rgba(10, 26, 47, ${Math.min(0.95, heroOverlay + 0.1).toFixed(
-                  2
-                )})), url(${studio.heroImageUrl})`,
-                backgroundPosition: `${heroFocusX}% ${heroFocusY}%`
-              }
-            : undefined
-        }
-      >
+                ).toFixed(2)}), rgba(10, 26, 47, ${Math.min(0.95, heroOverlay + 0.1).toFixed(2)}))`
+              }}
+            />
+          </>
+        ) : null}
         <div className="container studio-hero">
           <div className="studio-hero__content">
             <p className="eyebrow eyebrow--light">{studio.city || t("studio.kind")}</p>
