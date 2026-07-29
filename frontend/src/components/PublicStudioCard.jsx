@@ -30,7 +30,7 @@ export function PublicStudioCard({ studio, compact = false, cardTheme = null, re
       data-reveal-delay={revealDelay || undefined}
     >
       <div className="studio-card__media" style={mediaStyle}>
-        {studio.logoUrl ? (
+        {studio.logoUrl && studio.publicProfile?.logoPlacement !== "hidden" ? (
           <img
             className="studio-card__logo"
             src={studio.logoUrl}

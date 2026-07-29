@@ -9,6 +9,32 @@ import { getStudioTags } from "../utils/studioTags";
 import { studioRegistry } from "./studios";
 import { useLanguage } from "../i18n/LanguageContext";
 
+const LOGO_PLACEMENTS = ["panel", "heading", "hidden"];
+const LOGO_FITS = ["contain", "cover"];
+const LOGO_BACKDROPS = ["light", "dark", "none"];
+const HERO_HEIGHTS = ["compact", "standard", "tall"];
+
+function pickOption(value, allowed, fallback) {
+  const trimmed = String(value || "").trim();
+  return allowed.includes(trimmed) ? trimmed : fallback;
+}
+
+function clampNumber(value, min, max, fallback) {
+  // Number(null) och Number("") är 0 — utan vakten blir saknade fält 0 % i stället
+  // för default (t.ex. bildfokus i hörnet på studios som aldrig rört inställningen).
+  if (value === null || value === undefined || value === "") {
+    return fallback;
+  }
+
+  const parsed = Math.round(Number(value));
+
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+
+  return Math.min(max, Math.max(min, parsed));
+}
+
 function truncateText(value, maxLength = 160) {
   const text = String(value || "")
     .replace(/\s+/g, " ")
@@ -127,6 +153,19 @@ export function StudioProfilePage({ slug = "", studioOverride = null, previewMod
     ? publicProfile.galleryImageUrls.filter(Boolean)
     : [];
   const galleryCount = galleryImages.length;
+
+  // Presentationsval som studion styr från CRM:et. Värdena clampas i backend, men
+  // defaultas även här — äldre cachade svar saknar fälten helt.
+  const logoPlacement = pickOption(publicProfile.logoPlacement, LOGO_PLACEMENTS, "panel");
+  const logoWidthPercent = clampNumber(publicProfile.logoWidthPercent, 20, 100, 100);
+  const logoFit = pickOption(publicProfile.logoFit, LOGO_FITS, "contain");
+  const logoBackdrop = pickOption(publicProfile.logoBackdrop, LOGO_BACKDROPS, "light");
+  const heroHeight = pickOption(publicProfile.heroHeight, HERO_HEIGHTS, "standard");
+  const heroFocusX = clampNumber(publicProfile.heroFocusX, 0, 100, 50);
+  const heroFocusY = clampNumber(publicProfile.heroFocusY, 0, 100, 50);
+  const heroOverlay = clampNumber(publicProfile.heroOverlayPercent, 0, 90, 65) / 100;
+  const hasLogo = Boolean(studio?.logoUrl) && logoPlacement !== "hidden";
+  const logoAsHeading = hasLogo && logoPlacement === "heading";
   const trustHighlights = useMemo(
     () =>
       [
@@ -319,11 +358,17 @@ export function StudioProfilePage({ slug = "", studioOverride = null, previewMod
   return (
     <div>
       <section
-        className="page-hero page-hero--studio"
+        className={`page-hero page-hero--studio page-hero--studio-${heroHeight}`}
         style={
           studio.heroImageUrl
             ? {
-                backgroundImage: `linear-gradient(rgba(10, 26, 47, 0.55), rgba(10, 26, 47, 0.75)), url(${studio.heroImageUrl})`
+                backgroundImage: `linear-gradient(rgba(10, 26, 47, ${Math.max(
+                  0,
+                  heroOverlay - 0.1
+                ).toFixed(2)}), rgba(10, 26, 47, ${Math.min(0.95, heroOverlay + 0.1).toFixed(
+                  2
+                )})), url(${studio.heroImageUrl})`,
+                backgroundPosition: `${heroFocusX}% ${heroFocusY}%`
               }
             : undefined
         }
@@ -331,7 +376,22 @@ export function StudioProfilePage({ slug = "", studioOverride = null, previewMod
         <div className="container studio-hero">
           <div className="studio-hero__content">
             <p className="eyebrow eyebrow--light">{studio.city || t("studio.kind")}</p>
-            <h1>{studio.name}</h1>
+            {logoAsHeading ? (
+              <>
+                {/* Loggan är rubriken visuellt — h1:an finns kvar för sökmotorer
+                    och skärmläsare, därför är bilden dekorativ (alt=""). */}
+                <span
+                  className={`studio-hero__plate studio-hero__plate--heading studio-hero__plate--${logoBackdrop} studio-hero__plate--contain`}
+                  style={{ maxWidth: `${logoWidthPercent}%` }}
+                  aria-hidden="true"
+                >
+                  <img className="studio-hero__logo" src={studio.logoUrl} alt="" />
+                </span>
+                <h1 className="visually-hidden">{studio.name}</h1>
+              </>
+            ) : (
+              <h1>{studio.name}</h1>
+            )}
             {heroLeadText ? <p className="lead">{heroLeadText}</p> : null}
 
             {previewMode ? <p className="preview-banner">{previewMessage}</p> : null}
@@ -357,8 +417,17 @@ export function StudioProfilePage({ slug = "", studioOverride = null, previewMod
           </div>
 
           <aside className="studio-hero__panel">
-            {studio.logoUrl ? (
-              <img src={studio.logoUrl} alt={t("studio.logoAlt", { name: studio.name })} />
+            {hasLogo && logoPlacement === "panel" ? (
+              <span
+                className={`studio-hero__plate studio-hero__plate--panel studio-hero__plate--${logoBackdrop} studio-hero__plate--${logoFit}`}
+                style={{ maxWidth: `${logoWidthPercent}%` }}
+              >
+                <img
+                  className="studio-hero__logo"
+                  src={studio.logoUrl}
+                  alt={t("studio.logoAlt", { name: studio.name })}
+                />
+              </span>
             ) : null}
             <div className="studio-hero__details">
               <div>
