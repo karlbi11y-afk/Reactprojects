@@ -43,6 +43,33 @@ slotOfferRouter.get("/:token", async (req, res) => {
   }
 });
 
+slotOfferRouter.post("/:token/unsubscribe", async (req, res) => {
+  const rateLimit = enforceSubmissionRateLimit(req, "slot-offer-unsubscribe");
+
+  if (rateLimit.limited) {
+    return res.status(429).json({ message: rateLimit.message });
+  }
+
+  try {
+    const { response, payload } = await requestCrmPublicApi(
+      `/slot-offers/${encodeURIComponent(req.params.token)}/unsubscribe`,
+      { method: "POST", request: req }
+    );
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        message: getCrmProxyMessage(payload, "Kunde inte avregistrera dig.")
+      });
+    }
+
+    return res.status(response.status).json(payload);
+  } catch {
+    return res.status(502).json({
+      message: "Kunde inte avregistrera dig just nu. Försök igen om en stund."
+    });
+  }
+});
+
 slotOfferRouter.post("/:token/accept", async (req, res) => {
   const rateLimit = enforceSubmissionRateLimit(req, "slot-offer-accept");
 

@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { buildPageTitle, usePageMetadata } from "../utils/pageMetadata";
-import { getSlotOffer, acceptSlotOffer } from "../services/publicSiteApi";
+import {
+  getSlotOffer,
+  acceptSlotOffer,
+  unsubscribeFromSlotOffers
+} from "../services/publicSiteApi";
 
 /**
  * Sidan kunden landar på från erbjudande-SMS:et ("En tid har blivit ledig…").
@@ -47,6 +51,7 @@ export function SlotOfferPage({ token }) {
   const [accepting, setAccepting] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [unsubscribed, setUnsubscribed] = useState(false);
 
   usePageMetadata({
     title: buildPageTitle("Din tid"),
@@ -83,10 +88,33 @@ export function SlotOfferPage({ token }) {
     }
   }
 
+  async function handleUnsubscribe() {
+    setError("");
+    try {
+      await unsubscribeFromSlotOffers(token);
+      setUnsubscribed(true);
+    } catch (unsubscribeError) {
+      setError(unsubscribeError.message || "Kunde inte avregistrera dig.");
+    }
+  }
+
   if (loading) {
     return (
       <main className="slot-offer">
         <p className="slot-offer__loading">Hämtar tiden…</p>
+      </main>
+    );
+  }
+
+  if (unsubscribed) {
+    return (
+      <main className="slot-offer">
+        <div className="slot-offer__card">
+          <h1 className="slot-offer__title">Avregistrerad</h1>
+          <p className="slot-offer__note">
+            Du får inga fler SMS om lediga tider. Hör av dig till studion om du ändrar dig.
+          </p>
+        </div>
       </main>
     );
   }
@@ -157,6 +185,12 @@ export function SlotOfferPage({ token }) {
         )}
 
         {error && <p className="slot-offer__note slot-offer__note--warning">{error}</p>}
+
+        {/* Opt-out. Måste finnas här: ett alfanumeriskt SMS-avsändarnamn kan inte
+            ta emot STOPP-svar, så det här är kundens enda självbetjäningsväg ut. */}
+        <button type="button" className="slot-offer__unsubscribe" onClick={handleUnsubscribe}>
+          Jag vill inte ha fler tidserbjudanden
+        </button>
       </div>
     </main>
   );

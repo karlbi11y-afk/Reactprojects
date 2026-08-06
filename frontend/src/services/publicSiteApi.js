@@ -151,3 +151,9 @@ export function acceptSlotOffer(token) {
     method: "POST"
   });
 }
+
+export function unsubscribeFromSlotOffers(token) {
+  return request(`/api/public/slot-offers/${encodeURIComponent(token)}/unsubscribe`, {
+    method: "POST"
+  });
+}
