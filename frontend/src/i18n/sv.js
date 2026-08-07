@@ -439,6 +439,7 @@ export const sv = {
   gallery: {
     openImage: "Öppna bild {{index}} av {{total}}",
     imageAlt: "{{studio}} – tatuering {{index}}",
+    imageCount: "{{count}} bilder",
     seePortfolio: "Se hela portföljen",
     portfolioAria: "Portfölj – {{studio}}",
     portfolioEyebrow: "Portfölj",

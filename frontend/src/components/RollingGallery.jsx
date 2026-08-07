@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "../i18n/LanguageContext";
 
+// Antal bilder då bandet alltid rullar, oavsett mätning.
+const ALWAYS_ROLL_FROM = 5;
+
 /**
  * RollingGallery
  *
@@ -55,6 +58,16 @@ export function RollingGallery({ images = [], studioName = "" }) {
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const check = () => {
+      // Från fem kort och uppåt rullar bandet alltid. Fem kort är bredare än
+      // innehållskolumnen (1120 px) på varje brytpunkt, så mätningen säger ändå
+      // samma sak — men den är beroende av att layouten hunnit sätta sig, och
+      // hamnar den fel blir korten stillastående och de sista permanent osynliga
+      // utanför kanten. Tröskeln gör beteendet deterministiskt.
+      if (count >= ALWAYS_ROLL_FROM) {
+        setMode(reduce ? "scroll" : "marquee");
+        return;
+      }
+
       const cards = Array.from(track.children).slice(0, count);
       if (!cards.length) {
         setMode("static");
@@ -116,8 +129,14 @@ export function RollingGallery({ images = [], studioName = "" }) {
       }
       track.style.transform = `translateX(${offset}px)`;
     };
-    const tick = () => {
-      if (!paused) offset -= 0.5; // långsamt transportband
+    // Fart i px/sekund i stället för px/frame: en 144 Hz-skärm rullade tidigare
+    // 2,4× snabbare än en 60 Hz-skärm. 30 px/s är samma tempo som förut på 60 Hz.
+    const SPEED = 30;
+    let lastFrame = performance.now();
+    const tick = (now) => {
+      const delta = Math.min(now - lastFrame, 100); // hoppa inte långt efter flikbyte
+      lastFrame = now;
+      if (!paused) offset -= (SPEED * delta) / 1000;
       apply();
       raf = requestAnimationFrame(tick);
     };
@@ -238,6 +257,11 @@ export function RollingGallery({ images = [], studioName = "" }) {
       </div>
 
       <div className="rg-cta-row">
+        {/* Bara ~4 kort får plats i innehållskolumnen. Räknaren säger att det
+            finns fler bakom kanten även om bandet står stilla just då. */}
+        {count > 1 ? (
+          <span className="rg-count">{t("gallery.imageCount", { count })}</span>
+        ) : null}
         <button type="button" className="rg-portfolio-link" onClick={() => setPortfolioOpen(true)}>
           {t("gallery.seePortfolio")}
           <span className="rg-arrow" aria-hidden="true">→</span>

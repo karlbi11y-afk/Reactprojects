@@ -165,6 +165,7 @@ export function StudioProfilePage({ slug = "", studioOverride = null, previewMod
   const heroFocusY = clampNumber(publicProfile.heroFocusY, 0, 100, 50);
   const heroOverlay = clampNumber(publicProfile.heroOverlayPercent, 0, 90, 65) / 100;
   const hasLogo = Boolean(studio?.logoUrl) && logoPlacement !== "hidden";
+  const headingImageUrl = String(publicProfile.headingImageUrl || "").trim();
   const logoAsHeading = hasLogo && logoPlacement === "heading";
   const trustHighlights = useMemo(
     () =>
@@ -386,10 +387,19 @@ export function StudioProfilePage({ slug = "", studioOverride = null, previewMod
         <div className="container studio-hero">
           <div className="studio-hero__content">
             <p className="eyebrow eyebrow--light">{studio.city || t("studio.kind")}</p>
-            {logoAsHeading ? (
+            {/* Rubriken kan vara tre saker, i fallande prioritet: en egen rubrikbild,
+                loggan i rubrikläge, eller studionamnet som text. I bildfallen finns
+                h1:an kvar dold för sökmotorer och skärmläsare, och bilden är
+                dekorativ (alt="") så namnet inte läses upp två gånger. */}
+            {headingImageUrl ? (
               <>
-                {/* Loggan är rubriken visuellt — h1:an finns kvar för sökmotorer
-                    och skärmläsare, därför är bilden dekorativ (alt=""). */}
+                <span className="studio-hero__heading-image" aria-hidden="true">
+                  <img src={headingImageUrl} alt="" />
+                </span>
+                <h1 className="visually-hidden">{studio.name}</h1>
+              </>
+            ) : logoAsHeading ? (
+              <>
                 <span
                   className={`studio-hero__plate studio-hero__plate--heading studio-hero__plate--${logoBackdrop} studio-hero__plate--contain`}
                   style={{ maxWidth: `${logoWidthPercent}%` }}

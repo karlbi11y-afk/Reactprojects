@@ -2606,8 +2606,20 @@ h1 {
 }
 
 .rg-cta-row {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 14px;
   margin-top: 24px;
+}
+
+/* Antal bilder — visar att det finns fler bakom bandets kant. */
+.rg-count {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink-600);
+  letter-spacing: 0.01em;
 }
 
 .rg-portfolio-link {
@@ -2901,6 +2913,29 @@ h1 {
 .studio-hero__plate--heading.studio-hero__plate--light,
 .studio-hero__plate--heading.studio-hero__plate--dark {
   padding: 14px 20px;
+}
+
+/* Egen rubrikbild — ersätter h1:an visuellt. Ligger direkt mot toppsektionen utan
+   platta: fältet är tänkt för en transparent wordmark. Bredden styr wordmarks,
+   höjdtaket hindrar att en nästan kvadratisk bild sväljer hela vyn. */
+.studio-hero__heading-image {
+  display: block;
+  margin: 0 0 20px;
+}
+
+.studio-hero__heading-image img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(100%, 600px);
+  max-height: 140px;
+  object-fit: contain;
+}
+
+@media (max-width: 720px) {
+  .studio-hero__heading-image img {
+    max-height: 88px;
+  }
 }
 
 .page-hero--studio-compact {

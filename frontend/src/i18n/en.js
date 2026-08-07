@@ -433,6 +433,7 @@ export const en = {
   gallery: {
     openImage: "Open image {{index}} of {{total}}",
     imageAlt: "{{studio}} – tattoo {{index}}",
+    imageCount: "{{count}} images",
     seePortfolio: "See the full portfolio",
     portfolioAria: "Portfolio – {{studio}}",
     portfolioEyebrow: "Portfolio",
