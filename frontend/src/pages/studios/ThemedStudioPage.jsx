@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { buildPageTitle, usePageMetadata } from "../../utils/pageMetadata";
 import { getPublicStudioBySlug } from "../../services/publicSiteApi";
 import { StudioLeadFormEnhanced } from "../../components/StudioLeadFormEnhanced";
+import { RollingGallery } from "../../components/RollingGallery";
 import { getStudioTags } from "../../utils/studioTags";
 import { useLanguage } from "../../i18n/LanguageContext";
 
@@ -75,6 +76,7 @@ export function ThemedStudioPage({ slug, theme: themePartial = {} }) {
   }, [slug]);
 
   const profile = studio?.publicProfile || {};
+  const headingImageUrl = String(profile.headingImageUrl || "").trim();
   const galleryImages = useMemo(
     () => (Array.isArray(profile.galleryImageUrls) ? profile.galleryImageUrls.filter(Boolean) : []),
     [profile.galleryImageUrls]
@@ -201,21 +203,46 @@ export function ThemedStudioPage({ slug, theme: themePartial = {} }) {
           )}
 
           <div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "0 1.5rem 5rem", width: "100%", maxWidth: 860 }}>
-            {studio.logoUrl && (
+            {/* Symbolen visas bara när det inte finns en rubrikbild — en wordmark
+                innehåller oftast samma märke, och då blir det dubbelt. */}
+            {studio.logoUrl && !headingImageUrl && (
               <img
                 src={studio.logoUrl}
                 alt={studio.name}
                 style={{ height: 80, objectFit: "contain", marginBottom: "1.5rem", filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.5))" }}
               />
             )}
-            <h1 style={headingStyle({
-              fontSize: "clamp(3.5rem, 12vw, 7rem)",
-              color: t.textLight,
-              lineHeight: 1,
-              marginBottom: "0.75rem",
-            })}>
-              {studio.name}
-            </h1>
+            {headingImageUrl ? (
+              <>
+                {/* Rubrikbilden ersätter studionamnet visuellt. h1:an finns kvar dold
+                    för sökmotorer och skärmläsare, därför är bilden dekorativ. */}
+                <img
+                  src={headingImageUrl}
+                  alt=""
+                  aria-hidden="true"
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    maxWidth: 720,
+                    height: "auto",
+                    maxHeight: 200,
+                    objectFit: "contain",
+                    margin: "0 auto 0.75rem",
+                    filter: "drop-shadow(0 2px 12px rgba(0,0,0,0.45))",
+                  }}
+                />
+                <h1 className="visually-hidden">{studio.name}</h1>
+              </>
+            ) : (
+              <h1 style={headingStyle({
+                fontSize: "clamp(3.5rem, 12vw, 7rem)",
+                color: t.textLight,
+                lineHeight: 1,
+                marginBottom: "0.75rem",
+              })}>
+                {studio.name}
+              </h1>
+            )}
             {profile.headline && (
               <p style={{
                 fontSize: "1rem", color: "rgba(255,255,255,0.72)", letterSpacing: "0.18em",
@@ -363,21 +390,11 @@ export function ThemedStudioPage({ slug, theme: themePartial = {} }) {
             })}>
               {translate("themedStudio.gallery")}
             </h2>
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-              gap: "0.5rem",
-              maxWidth: 1100,
-              margin: "0 auto",
-            }}>
-              {galleryImages.slice(1).map((url, i) => (
-                <img
-                  key={i}
-                  src={url}
-                  alt={translate("themedStudio.imageAlt", { name: studio.name, index: i + 1 })}
-                  style={{ width: "100%", aspectRatio: "1", objectFit: "cover", display: "block" }}
-                />
-              ))}
+            {/* Rullande band med ALLA bilder. Rutnätet visade slice(1) eftersom
+                bild 0 används som stor bild längre upp — fem bilder i CRM:et blev
+                därför fyra här, vilket såg ut som att en bild försvunnit. */}
+            <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+              <RollingGallery images={galleryImages} studioName={studio.name} />
             </div>
           </section>
         )}
