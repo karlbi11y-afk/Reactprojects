@@ -73,6 +73,20 @@ export function getPublicStudios() {
   return request("/api/public/studios").then(normalizeArrayPayload);
 }
 
+/**
+ * Räknar ett besök på studions publika länk. Fire-and-forget: mätningen får
+ * aldrig påverka sidan, så fel sväljs. `keepalive` gör att anropet överlever
+ * om besökaren klickar vidare direkt.
+ */
+export function recordStudioVisit(slug, payload) {
+  return fetch(`${API_BASE}/api/public/studios/${encodeURIComponent(slug)}/visit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    keepalive: true
+  }).catch(() => {});
+}
+
 export function getPublicStudioBySlug(slug) {
   return request(`/api/public/studios/${encodeURIComponent(slug)}`);
 }

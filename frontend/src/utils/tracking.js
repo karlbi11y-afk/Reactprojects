@@ -41,6 +41,27 @@ function getOrCreateSessionId() {
   return nextSessionId;
 }
 
+/**
+ * Är det här första gången studiosidan öppnas i den här webbläsarsessionen?
+ *
+ * Ett klick på en biolänk öppnar en ny flik och ger därmed en ny session,
+ * medan omladdning, språkbyte och navigering fram och tillbaka inte gör det.
+ * Det är skillnaden mellan "antal klick" och "antal sidvisningar".
+ */
+export function isFirstStudioVisitInSession(slug) {
+  if (typeof window === "undefined") return false;
+
+  const key = `inkrevenue-studio-seen:${slug}`;
+  try {
+    if (window.sessionStorage.getItem(key)) return false;
+    window.sessionStorage.setItem(key, "1");
+    return true;
+  } catch {
+    // Privat läge utan sessionStorage: räkna hellre besöket än att tappa det.
+    return true;
+  }
+}
+
 export function getTrackingPayload() {
   if (typeof window === "undefined") {
     return {};

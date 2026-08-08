@@ -15,6 +15,7 @@ import { studioRegistry } from "./pages/studios";
 import { ThemedStudioPage } from "./pages/studios/ThemedStudioPage";
 import { useSiteLocation } from "./utils/siteRouter";
 import { useScrollReveal } from "./utils/useScrollReveal";
+import { useStudioVisitTracking } from "./utils/useStudioVisitTracking";
 import { LanguageProvider } from "./i18n/LanguageContext";
 import { splitLanguageFromPath } from "./i18n/config";
 import { LanguageHint } from "./components/LanguageHint";
@@ -111,6 +112,9 @@ function getPageFromPath(pathname) {
     const entry = studioRegistry[slug];
     return {
       currentPath: pathname,
+      // Slugen ligger på sidan så att besöksmätningen kan ske på ett ställe —
+      // båda studiosidorna nedan går genom den här rutten.
+      studioSlug: slug,
       element: entry
         ? <ThemedStudioPage slug={slug} theme={entry.theme} />
         : <StudioProfilePage slug={slug} />
@@ -125,6 +129,7 @@ function getPageFromPath(pathname) {
 
 function AppContent({ page }) {
   useScrollReveal();
+  useStudioVisitTracking(page.studioSlug);
 
   return (
     <div>
