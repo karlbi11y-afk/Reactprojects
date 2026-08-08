@@ -6,6 +6,21 @@ export const CRM_API_BASE_URL = normalizeUrl(
   process.env.CRM_API_BASE_URL || "http://localhost:4000"
 );
 
+// CRM-backenden läser besökarens IP ur x-forwarded-for och avgör bot/app-webbläsare
+// ur user-agent. Utan vidarebefordran ser den bara den här proxyns IP och saknar
+// UA helt: rate limits blir gemensamma för hela sajten och botfiltret blir blint.
+function forwardedClientHeaders(request) {
+  if (!request) return {};
+
+  const forwardedFor =
+    request.get("x-forwarded-for") || request.ip || request.socket?.remoteAddress || "";
+
+  return {
+    ...(forwardedFor ? { "X-Forwarded-For": forwardedFor } : {}),
+    ...(request.get("user-agent") ? { "User-Agent": request.get("user-agent") } : {})
+  };
+}
+
 function createCrmPublicUrl(pathname, query = {}) {
   const url = new URL(`${CRM_API_BASE_URL}/api/public${pathname}`);
 
@@ -25,6 +40,7 @@ export async function requestCrmPublicApi(
     method,
     headers: {
       ...(body ? { "Content-Type": "application/json" } : {}),
+      ...forwardedClientHeaders(request),
       Origin: request?.get("origin") || "",
       Referer: body?.pageUrl || request?.get("referer") || ""
     },

@@ -14,6 +14,7 @@ function getClientAddress(request) {
 const submissionState = new Map();
 const draftSaveState = new Map();
 const publicReadState = new Map();
+const visitTrackingState = new Map();
 
 const submissionWindowMs = Number(process.env.SUBMISSION_RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000);
 const submissionMaxRequests = Number(process.env.SUBMISSION_RATE_LIMIT_MAX || 6);
@@ -21,6 +22,8 @@ const draftSaveWindowMs = Number(process.env.DRAFT_SAVE_RATE_LIMIT_WINDOW_MS || 
 const draftSaveMaxRequests = Number(process.env.DRAFT_SAVE_RATE_LIMIT_MAX || 40);
 const publicReadWindowMs = Number(process.env.PUBLIC_READ_RATE_LIMIT_WINDOW_MS || 60 * 1000);
 const publicReadMaxRequests = Number(process.env.PUBLIC_READ_RATE_LIMIT_MAX || 20);
+const visitTrackingWindowMs = Number(process.env.VISIT_TRACKING_RATE_LIMIT_WINDOW_MS || 60 * 1000);
+const visitTrackingMaxRequests = Number(process.env.VISIT_TRACKING_RATE_LIMIT_MAX || 60);
 
 function enforceRateLimit(request, scope, { state, windowMs, maxRequests, message }) {
   const key = `${scope}:${getClientAddress(request)}`;
@@ -54,6 +57,20 @@ export function enforcePublicReadRateLimit(request, scope) {
     maxRequests: publicReadMaxRequests,
     message:
       "Vi har tagit emot många förfrågningar från samma anslutning. Vänta en kort stund och försök igen."
+  });
+}
+
+/**
+ * Besöksmätning: generösare än publicReadRateLimit med flit. Mobiloperatörer
+ * NAT:ar många besökare bakom samma IP, och ett tappat besök syns direkt som ett
+ * hål i statistiken. Samma tak som CRM-backendens visitTrackingLimiter.
+ */
+export function enforceVisitTrackingRateLimit(request, scope) {
+  return enforceRateLimit(request, scope, {
+    state: visitTrackingState,
+    windowMs: visitTrackingWindowMs,
+    maxRequests: visitTrackingMaxRequests,
+    message: "För många besöksregistreringar från samma anslutning."
   });
 }
 

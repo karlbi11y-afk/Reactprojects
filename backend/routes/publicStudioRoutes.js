@@ -2,7 +2,8 @@ import { Router } from "express";
 import {
   enforcePublicReadRateLimit,
   enforceSubmissionRateLimit,
-  enforceDraftSaveRateLimit
+  enforceDraftSaveRateLimit,
+  enforceVisitTrackingRateLimit
 } from "../middleware/rateLimit.js";
 import { requestCrmPublicApi, getCrmProxyMessage } from "../utils/crmClient.js";
 
@@ -60,6 +61,32 @@ publicStudioRouter.get("/:slug", async (req, res) => {
       message: "Kunde inte ansluta till CRM-backenden för att läsa studiosidan."
     });
   }
+});
+
+// Beacon från studiosidan: räknar klick på studions publika länk. Måste finnas
+// HÄR också — frontenden når aldrig CRM-backenden direkt, utan varje publik väg
+// måste öppnas explicit i den här proxyn. Saknas den svarar proxyn 404 och
+// mätningen dör tyst, eftersom beaconen sväljer alla fel med flit.
+//
+// Svarar alltid 204: statistik får aldrig påverka besökarens sida.
+publicStudioRouter.post("/:slug/visit", async (req, res) => {
+  const rateLimit = enforceVisitTrackingRateLimit(req, "studio-public-visit");
+
+  if (rateLimit.limited) {
+    return res.status(204).end();
+  }
+
+  try {
+    await requestCrmPublicApi(`/studios/${encodeURIComponent(req.params.slug)}/visit`, {
+      method: "POST",
+      body: req.body || {},
+      request: req
+    });
+  } catch {
+    // Tyst: ett tappat besök är bättre än ett fel hos besökaren.
+  }
+
+  return res.status(204).end();
 });
 
 publicStudioRouter.get("/:slug/availability", async (req, res) => {
