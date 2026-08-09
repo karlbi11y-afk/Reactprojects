@@ -505,6 +505,16 @@ export const en = {
     studios: "See studios"
   },
 
+  productPreview: {
+    eyebrow: "The product",
+    title: "This is what you see when you log in",
+    lead:
+      "Enquiries, bookings, waiting list and social media in one place. Click through the views below — these are the same screens studios work in every day.",
+    tabsLabel: "Choose a view",
+    note:
+      "Shown with sample data, and in Swedish — that is the language of the CRM. Your studio only ever sees its own data."
+  },
+
   crmPreview: {
     waiting: "Waiting for live preview from the CRM...",
     savedMessage:

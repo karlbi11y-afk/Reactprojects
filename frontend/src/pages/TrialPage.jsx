@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { CrmPreview } from "../components/CrmPreview";
 import { buildPageTitle, usePageMetadata } from "../utils/pageMetadata";
 import { SiteLink } from "../utils/siteRouter";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -119,6 +120,11 @@ export function TrialPage() {
           </div>
         </div>
       </section>
+
+      {/* ── Produkten: förhandsvisning av CRM:t ──
+          Trial-trafiken registrerar sig direkt utan säljsamtal — de behöver se
+          vad de faktiskt får innan de fyller i formuläret. */}
+      <CrmPreview />
 
       {/* ── Så kommer ni igång ── */}
       <section className="section section--lavender" id="sa-kommer-ni-igang">

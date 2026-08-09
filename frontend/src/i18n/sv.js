@@ -511,6 +511,17 @@ export const sv = {
     studios: "Se studios"
   },
 
+  // Ramen runt CRM-förhandsvisningen. Texten INUTI skärmarna översätts aldrig —
+  // CRM:t finns bara på svenska, se kommentaren i components/CrmPreview.jsx.
+  productPreview: {
+    eyebrow: "Produkten",
+    title: "Så ser det ut när ni loggar in",
+    lead:
+      "Förfrågningar, bokningar, väntelista och sociala medier på ett ställe. Klicka mellan vyerna nedan — det är samma skärmar som studios jobbar i varje dag.",
+    tabsLabel: "Välj vy i CRM:t",
+    note: "Vyerna visas med exempeldata. Er studio ser bara sin egen."
+  },
+
   crmPreview: {
     waiting: "Väntar på live preview från CRM...",
     savedMessage:

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { CrmPreview } from "../components/CrmPreview";
 import { PublicStudioCard } from "../components/PublicStudioCard";
 import { StrategyCallForm } from "../components/StrategyCallForm";
 import { getPublicStudios } from "../services/publicSiteApi";
@@ -201,6 +202,10 @@ export function HomePage() {
 
         </div>
       </section>
+
+      {/* ── Produkten: förhandsvisning av CRM:t ──
+          Ligger direkt efter studioägar-pitchen: löftet ovanför, beviset här. */}
+      <CrmPreview />
 
       {/* ── För kunder ── */}
       <section className="section section--white" id="for-customers">
