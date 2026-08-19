@@ -1,31 +1,178 @@
-/* Royalkave design tokens — extracted from inkrevenue studioRegistry.royalkave
-   Monochrome, editorial, bold. Source: frontend/src/pages/studios/index.js */
+/* The Royal Kave — designtokens v1.0 (2026-08-18)
+   Heraldiskt, strikt monokromt, skarpt. Se ROYALKAVE-DESIGN-SYSTEM.md.
+   Typsnitt:
+   https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600&display=swap */
 
 :root {
-  /* Color */
-  --rk-bg: #ffffff;
-  --rk-bg-alt: #f2f2f2;
-  --rk-bg-dark: #0d0d0d;
-  --rk-text: #111111;
-  --rk-text-light: #ffffff;
-  --rk-text-muted: #555555;
-  --rk-accent: #111111;
-  --rk-accent-text: #ffffff;
-  --rk-badge-bg: #111111;
-  --rk-badge-text: #ffffff;
-  --rk-cta-bg: #111111;
-  --rk-cta-text: #ffffff;
+  /* ── Färg: monokrom ramp ───────────────────────────── */
+  --rk-ink: #111111;        /* märkessvart — inte #000 */
+  --rk-void: #0d0d0d;       /* djup bakgrund */
+  --rk-soot: #1e1e1e;       /* upphöjd yta mot void */
+  --rk-graphite: #555555;   /* sekundär text */
+  --rk-ash: #8a8a8a;        /* inaktiv text */
+  --rk-smoke: #d4d4d4;      /* ramar, avdelare */
+  --rk-bone: #f2f2f2;       /* alternativ ljus bakgrund */
+  --rk-paper: #ffffff;      /* grund */
+  --rk-gilt: #b08d57;       /* valfri mässing — aldrig i logotypen */
 
-  /* Typography */
-  --rk-font-heading: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
+  /* ── Semantiskt ────────────────────────────────────── */
+  --rk-bg: var(--rk-paper);
+  --rk-bg-alt: var(--rk-bone);
+  --rk-bg-dark: var(--rk-void);
+  --rk-surface-dark: var(--rk-soot);
+  --rk-text: var(--rk-ink);
+  --rk-text-light: var(--rk-paper);
+  --rk-text-muted: var(--rk-graphite);
+  --rk-text-disabled: var(--rk-ash);
+  --rk-border: var(--rk-smoke);
+  --rk-border-dark: rgba(255, 255, 255, 0.14);
+  --rk-accent: var(--rk-ink);
+  --rk-accent-text: var(--rk-paper);
+  --rk-badge-bg: var(--rk-ink);
+  --rk-badge-text: var(--rk-paper);
+  --rk-cta-bg: var(--rk-ink);
+  --rk-cta-text: var(--rk-paper);
+
+  /* ── Typografi ─────────────────────────────────────── */
+  --rk-font-display: 'Playfair Display', 'Didot', 'Bodoni MT', Georgia, serif;
   --rk-font-body: 'Inter', 'Helvetica Neue', Arial, sans-serif;
   --rk-heading-transform: uppercase;
   --rk-heading-weight: 900;
+  --rk-heading-tracking: 0.04em;
+  --rk-label-tracking: 0.18em;
+  --rk-body-line-height: 1.6;
 
-  /* Shape */
-  --rk-radius-pill: 999px;
+  --rk-text-xs: 12px;
+  --rk-text-sm: 14px;
+  --rk-text-base: 16px;
+  --rk-text-lg: 20px;
+  --rk-text-xl: 25px;
+  --rk-text-2xl: 33px;
+  --rk-text-3xl: 44px;
+  --rk-text-4xl: 59px;
+  --rk-text-5xl: 79px;
 
-  /* Gradients */
+  /* ── Rum ───────────────────────────────────────────── */
+  --rk-space-1: 4px;
+  --rk-space-2: 8px;
+  --rk-space-3: 12px;
+  --rk-space-4: 16px;
+  --rk-space-6: 24px;
+  --rk-space-8: 32px;
+  --rk-space-12: 48px;
+  --rk-space-16: 64px;
+  --rk-space-24: 96px;
+  --rk-space-32: 128px;
+
+  /* ── Form ──────────────────────────────────────────── */
+  --rk-radius-none: 0;
+  --rk-radius-pill: 999px;   /* endast knappar och taggar */
+
+  /* ── Rörelse ───────────────────────────────────────── */
+  --rk-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --rk-dur-fast: 160ms;
+  --rk-dur-base: 320ms;
+  --rk-dur-slow: 640ms;
+  --rk-dur-cinematic: 1200ms;
+
+  /* ── Gradienter / överlägg ─────────────────────────── */
   --rk-gradient-hero: linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.2) 55%, transparent 100%);
   --rk-gradient-card: linear-gradient(135deg, rgba(0,0,0,0.92) 0%, rgba(30,30,30,0.75) 100%);
+  --rk-video-plate: rgba(0, 0, 0, 0.35);
 }
+
+/* Kvar från prod (studioRegistry.royalkave). Ta bort när studiosidan bytt till Didone. */
+:root {
+  --rk-font-heading-legacy: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --rk-dur-fast: 0ms;
+    --rk-dur-base: 0ms;
+    --rk-dur-slow: 0ms;
+    --rk-dur-cinematic: 0ms;
+  }
+}
+
+/* ── Grundklasser ────────────────────────────────────── */
+
+.rk-display,
+.rk-h1,
+.rk-h2,
+.rk-h3 {
+  font-family: var(--rk-font-display);
+  font-weight: var(--rk-heading-weight);
+  text-transform: var(--rk-heading-transform);
+  letter-spacing: var(--rk-heading-tracking);
+  color: var(--rk-text);
+  margin: 0;
+}
+
+.rk-display { font-size: var(--rk-text-4xl); }
+.rk-h1 { font-size: var(--rk-text-3xl); }
+.rk-h2 { font-size: var(--rk-text-2xl); }
+.rk-h3 { font-size: var(--rk-text-xl); }
+
+.rk-body {
+  font-family: var(--rk-font-body);
+  font-weight: 400;
+  font-size: var(--rk-text-base);
+  line-height: var(--rk-body-line-height);
+  color: var(--rk-text);
+  max-width: 68ch;
+}
+
+.rk-label {
+  font-family: var(--rk-font-body);
+  font-weight: 500;
+  font-size: var(--rk-text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--rk-label-tracking);
+  color: var(--rk-text-muted);
+}
+
+.rk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--rk-cta-bg);
+  color: var(--rk-cta-text);
+  border: 0;
+  border-radius: var(--rk-radius-pill);
+  padding: 14px 32px;
+  font-family: var(--rk-font-body);
+  font-weight: 600;
+  font-size: var(--rk-text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  transition: opacity var(--rk-dur-fast) var(--rk-ease);
+}
+.rk-btn:hover { opacity: 0.82; }
+.rk-btn:focus-visible { outline: 2px solid var(--rk-ink); outline-offset: 3px; }
+
+.rk-btn--ghost {
+  background: transparent;
+  color: var(--rk-ink);
+  border: 1px solid var(--rk-ink);
+}
+
+.rk-rule {
+  border: 0;
+  border-top: 1px solid var(--rk-border);
+  margin: var(--rk-space-12) 0;
+}
+
+.rk-dark {
+  background: var(--rk-bg-dark);
+  color: var(--rk-text-light);
+}
+.rk-dark .rk-h1,
+.rk-dark .rk-h2,
+.rk-dark .rk-h3,
+.rk-dark .rk-display,
+.rk-dark .rk-body { color: var(--rk-text-light); }
+.rk-dark .rk-label { color: var(--rk-ash); }
+.rk-dark .rk-rule { border-top-color: var(--rk-border-dark); }
+.rk-dark .rk-btn { background: var(--rk-paper); color: var(--rk-ink); }
