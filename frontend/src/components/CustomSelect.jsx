@@ -83,7 +83,7 @@ export function CustomSelect({
         )}
         {options.map((option) => (
           <option key={option.value} value={option.value}>
-            {option.label}
+            {option.meta ? `${option.label} (${option.meta})` : option.label}
           </option>
         ))}
       </select>
@@ -162,7 +162,10 @@ export function CustomSelect({
           }
         }}
       >
-        <span className={`dd__value${selectedOption ? "" : " is-placeholder"}`}>
+        <span
+          className={`dd__value${selectedOption ? "" : " is-placeholder"}`}
+          title={selectedOption ? selectedOption.label : undefined}
+        >
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <svg

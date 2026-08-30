@@ -597,6 +597,16 @@ export const sv = {
     sizeLarge: "Stor (upp till {{cm}} cm)",
     sizeExtra: "Extra stor (över {{cm}} cm)",
     sizeExtraNoThreshold: "Extra stor / helarm / rygg",
+    // Kort namn = det som syns i den stängda väljaren. Intervallet visas som
+    // meta bredvid namnet i listan, så knappen aldrig behöver kapas.
+    sizeTinyName: "Mycket liten",
+    sizeSmallName: "Liten",
+    sizeMediumName: "Mellanstor",
+    sizeLargeName: "Stor",
+    sizeExtraName: "Extra stor",
+    sizeRangeUpTo: "upp till {{cm}} cm",
+    sizeRangeOver: "över {{cm}} cm",
+    sizeRangeNoThreshold: "helarm / rygg",
 
     stepTattooLabel: "Om tatueringen",
     stepTattooHeading: "Berätta om din tatuering",

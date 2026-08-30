@@ -199,28 +199,33 @@ function buildSizeOptions(studio, t) {
   //
   // value = alltid den svenska texten. Backendens estimator matchar "mycket
   //   liten"/"mellanstor"/"extra stor" som delsträngar — översatta värden gör
-  //   att tidsberäkningen tyst hamnar fel.
-  // label = översatt, det kunden ser.
+  //   att tidsberäkningen tyst hamnar fel. Rör därför INTE sizeTiny m.fl. i
+  //   i18n-filerna; det är de som bygger value.
+  // label = kort namn ("Mycket liten"), det enda som får plats i den stängda
+  //   väljaren i en tvåkolumnsrad.
+  // meta = cm-intervallet, visas bredvid namnet i listan (desktop) och läggs
+  //   till inom parentes i native <select> (mobil, där fältet är fullbrett).
   const options = [];
-  const push = (key, cm) => {
+  const push = (key, cm, rangeKey) => {
     const vars = { cm };
     options.push({
       value: interpolateSwedish(key, vars),
-      label: t(`leadForm.${key}`, vars)
+      label: t(`leadForm.${key}Name`),
+      meta: t(`leadForm.${rangeKey}`, vars)
     });
   };
 
   if (tinyMaxCentimeters > 0) {
-    push("sizeTiny", tinyMaxCentimeters);
+    push("sizeTiny", tinyMaxCentimeters, "sizeRangeUpTo");
   }
   if (smallMaxCentimeters > 0 && smallMaxCentimeters > tinyMaxCentimeters) {
-    push("sizeSmall", smallMaxCentimeters);
+    push("sizeSmall", smallMaxCentimeters, "sizeRangeUpTo");
   }
   if (mediumMaxCentimeters > 0 && mediumMaxCentimeters > smallMaxCentimeters) {
-    push("sizeMedium", mediumMaxCentimeters);
+    push("sizeMedium", mediumMaxCentimeters, "sizeRangeUpTo");
   }
   if (largeMaxCentimeters > 0 && largeMaxCentimeters > mediumMaxCentimeters) {
-    push("sizeLarge", largeMaxCentimeters);
+    push("sizeLarge", largeMaxCentimeters, "sizeRangeUpTo");
   }
 
   // Största tröskeln som finns blir undre gräns för "extra stor".
@@ -228,11 +233,12 @@ function buildSizeOptions(studio, t) {
     .find((cm) => cm > 0);
 
   if (largestThreshold) {
-    push("sizeExtra", largestThreshold);
+    push("sizeExtra", largestThreshold, "sizeRangeOver");
   } else {
     options.push({
       value: sv.leadForm.sizeExtraNoThreshold,
-      label: t("leadForm.sizeExtraNoThreshold")
+      label: t("leadForm.sizeExtraName"),
+      meta: t("leadForm.sizeRangeNoThreshold")
     });
   }
 

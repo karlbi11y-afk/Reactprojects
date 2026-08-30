@@ -811,7 +811,10 @@ h1 {
    padding och appearance oavsett container (booking-form eller filters-panel). */
 .select-native {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   box-sizing: border-box;
+  text-overflow: ellipsis;
   padding: 12px 42px 12px 14px;
   border-radius: 12px;
   border: 1px solid #d8e1f2;
@@ -846,6 +849,8 @@ h1 {
 
 .dd__trigger {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -879,6 +884,7 @@ h1 {
 }
 
 .dd__value {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -941,6 +947,7 @@ h1 {
 }
 
 .dd__option-label {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1998,8 +2005,22 @@ h1 {
 .filters-panel label,
 .form-grid label {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 6px;
   font-weight: 500;
+  min-width: 0;
+}
+
+/* SKYDDSREGEL – ta inte bort.
+   Ett native <select> vägrar krympa under sitt bredaste alternativ, och en
+   auto-kolumn i etiketten växer då förbi sin rutnätscell (t.ex. "Mycket liten
+   (upp till 3 cm)" som la sig över Budget-fältet). Kolumnregeln ovan håller
+   spåret, och raden nedan är skyddsnätet för alla kontroller i en etikett. */
+.filters-panel label > *,
+.form-grid label > *,
+.studio-lead-form label > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .filters-panel input,
@@ -2008,6 +2029,13 @@ h1 {
 .form-grid select,
 .studio-lead-form textarea {
   padding: 12px 14px;
+}
+
+/* .form-grid select (0,1,1) slår .select-native (0,1,0) och satte tillbaka
+   14 px högerpadding – texten löpte in under chevronen. Chevronzonen tillbaka. */
+.filters-panel select.select-native,
+.form-grid select.select-native {
+  padding-right: 42px;
   border-radius: 12px;
   border: 1px solid #d8e1f2;
   font-family: inherit;
@@ -2031,9 +2059,14 @@ h1 {
   box-shadow: 0 0 0 4px rgba(33, 95, 176, 0.08);
 }
 
+/* Bokningsformuläret ligger i __aside, inte i __main. Sidokolumnen är alltså
+   den som måste vara bred nog för en tvåkolumnsrad: 2 × 250 px + 14 px gap +
+   2 × 28 px kortpadding = 570 px. 580 px ger marginal. Sänk inte taket här
+   utan att mäta om .form-grid – det är den här bredden som avgör om Stil och
+   Placering får stå bredvid varandra. */
 .studio-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(380px, 540px);
+  grid-template-columns: minmax(0, 1fr) minmax(380px, 580px);
   gap: 40px;
   align-items: start;
 }
@@ -2419,7 +2452,7 @@ h1 {
 
 .studio-layout__aside {
   width: 100%;
-  max-width: 540px;
+  max-width: 580px;
   justify-self: end;
 }
 
@@ -2500,9 +2533,14 @@ h1 {
   font-size: 1.05rem;
 }
 
+/* Två kolumner bara när båda får minst 250 px – annars en. 250 px är uppmätt,
+   inte gissat: "Ornamental / heavy pattern" är den längsta inbyggda etiketten
+   och kräver 192 px text + 58 px padding/chevron. auto-fit mäter den
+   FAKTISKA containern, inte fönstret. En media query på viewport missar precis
+   det här fallet: bred skärm, smal kolumn. Lägg inte tillbaka en sådan. */
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
   gap: 14px;
 }
 
@@ -3390,8 +3428,7 @@ h1 {
     white-space: nowrap;
   }
 
-  .filters-panel,
-  .form-grid {
+  .filters-panel {
     grid-template-columns: 1fr;
   }
 
