@@ -642,6 +642,8 @@ export const en = {
 
     checkingAvailability: "Checking available times...",
     availabilityError: "We couldn't check available times right now.",
+    availabilityStale:
+      "We couldn't refresh the times right now. The times below are from the most recent check — please pick your time again.",
     prevWeek: "Previous week",
     nextWeek: "Next week",
     selectedTime: "Selected time",
@@ -661,6 +663,10 @@ export const en = {
     feeText:
       "SEK {{amount}} is an administrative fee paid when booking and is not deducted from the final price.",
     stripeNote: "Payment is handled securely via Stripe, straight to the studio.",
+    depositLaterText:
+      "The studio charges a SEK {{amount}} deposit when your time is confirmed. You pay nothing now.",
+    feeLaterText:
+      "The studio charges a SEK {{amount}} booking fee when your time is confirmed. You pay nothing now.",
 
     payHeading: "Pay SEK {{amount}}",
     paySecure: "Secure payment via Stripe",
@@ -673,7 +679,10 @@ export const en = {
     payToPayment: "Go to payment — SEK {{amount}}",
     payRegistering: "Registering your booking...",
     paySavedFailed:
-      "The payment went through but the booking couldn't be saved. Please contact the studio.",
+      "The payment went through but the booking couldn't be saved. Try registering it again below.",
+    payRegisterRetryInfo:
+      "Your payment is complete. The request couldn't be registered — try again below. You won't be charged twice.",
+    payRegisterRetry: "Register the request again",
 
     paidTitle: "Payment complete",
     paidAmount: "SEK {{amount}}",
@@ -687,6 +696,8 @@ export const en = {
     previewNotice:
       "Preview mode: connect the page to a CRM slug to test sending real leads.",
     previewDisabled: "This demo page isn't connected to a real studio in the CRM yet.",
+    previewReadOnly:
+      "Preview: the form can't be submitted from here. Open your public page to send a real enquiry.",
 
     consentRequired: "Accept the privacy policy and terms to continue.",
     submitting: "Sending...",
@@ -694,7 +705,7 @@ export const en = {
     sending: "Sending your enquiry...",
     sendFailed: "We couldn't send that right now. Please try again shortly.",
     success:
-      "Thanks! Your enquiry has been sent. The studio normally gets back within 24 hours by email or phone — any day of the week.",
+      "Thanks! Your enquiry has been sent. We normally get back within 24 hours by email or phone — any day of the week.",
 
     errorStyle: "Please pick a tattoo style.",
     errorPlacement: "Please fill in the placement.",

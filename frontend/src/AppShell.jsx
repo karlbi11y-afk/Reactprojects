@@ -99,6 +99,9 @@ function getPageFromPath(pathname) {
       element: (
         <StudioProfilePage
           previewMode
+          // Den här vägen är den avsiktliga end-to-end-testen: utan slug är
+          // formuläret ändå dött, med slug ska det skapa ett riktigt lead.
+          allowPreviewSubmit
           studioOverride={createDemoStudioPreview({ submitSlug })}
         />
       )

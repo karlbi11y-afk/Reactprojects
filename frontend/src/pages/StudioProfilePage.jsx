@@ -51,7 +51,15 @@ function truncateText(value, maxLength = 160) {
   return `${text.slice(0, maxLength - 1).trim()}…`;
 }
 
-export function StudioProfilePage({ slug = "", studioOverride = null, previewMode = false }) {
+export function StudioProfilePage({
+  slug = "",
+  studioOverride = null,
+  previewMode = false,
+  // Skickas vidare till formuläret. Se kommentaren i StudioLeadFormEnhanced:
+  // en förhandsvisning får inte skapa riktiga leads om den inte uttryckligen
+  // finns för det.
+  allowPreviewSubmit = false
+}) {
   const { t, language } = useLanguage();
   const [studio, setStudio] = useState(studioOverride);
   const [loading, setLoading] = useState(!studioOverride);
@@ -561,6 +569,7 @@ export function StudioProfilePage({ slug = "", studioOverride = null, previewMod
               introText={formIntro}
               successPreviewText={successPreviewText}
               previewMode={previewMode}
+              allowPreviewSubmit={allowPreviewSubmit}
             />
           </div>
         </div>

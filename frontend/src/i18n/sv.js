@@ -653,6 +653,8 @@ export const sv = {
 
     checkingAvailability: "Kontrollerar lediga tider...",
     availabilityError: "Det gick inte att kontrollera lediga tider just nu.",
+    availabilityStale:
+      "Vi kunde inte uppdatera tiderna just nu. Tiderna nedan är från den senaste kontrollen — välj din tid igen.",
     prevWeek: "Föregående vecka",
     nextWeek: "Nästa vecka",
     selectedTime: "Vald tid",
@@ -672,6 +674,13 @@ export const sv = {
     feeText:
       "{{amount}} kr är en administrativ avgift som betalas vid bokning och räknas inte av mot slutpriset.",
     stripeNote: "Betalning sker säkert via Stripe direkt till studion.",
+    // Punkt 12: visas i stället för depositText/feeText när formuläret INTE
+    // tar betalt (ingen direktbokning). "Du betalar inget nu" är meningen som
+    // hindrar kunden från att tro att betalningen krånglade.
+    depositLaterText:
+      "Studion tar ut {{amount}} kr i deposition när tiden bekräftas. Du betalar inget nu.",
+    feeLaterText:
+      "Studion tar ut en bokningsavgift på {{amount}} kr när tiden bekräftas. Du betalar inget nu.",
 
     payHeading: "Betala {{amount}} kr",
     paySecure: "Säker betalning via Stripe",
@@ -683,7 +692,11 @@ export const sv = {
     payStartFailed: "Kunde inte starta betalningen. Försök igen.",
     payToPayment: "Gå till betalning — {{amount}} kr",
     payRegistering: "Registrerar din bokning...",
-    paySavedFailed: "Betalningen gick igenom men bokningen kunde inte sparas. Kontakta studion.",
+    paySavedFailed:
+      "Betalningen gick igenom men bokningen kunde inte sparas. Försök registrera den igen nedan.",
+    payRegisterRetryInfo:
+      "Betalningen är genomförd. Förfrågan kunde inte registreras — försök igen nedan. Du debiteras inte en gång till.",
+    payRegisterRetry: "Registrera förfrågan igen",
 
     paidTitle: "Betalning genomförd",
     paidAmount: "{{amount}} kr",
@@ -697,6 +710,10 @@ export const sv = {
     previewNotice:
       "Preview-läge: koppla sidan till en CRM-slug för att testa att skicka riktiga leads.",
     previewDisabled: "Den här demosidan är inte kopplad till en riktig studio i CRM ännu.",
+    // Förhandsvisningen körs mot en riktig studio, så meddelandet ovan stämmer
+    // inte här: det finns en koppling, den är bara avstängd med flit.
+    previewReadOnly:
+      "Förhandsvisning: formuläret går inte att skicka in härifrån. Öppna er publika sida för att skicka en riktig förfrågan.",
 
     consentRequired: "Godkänn integritetspolicy och villkor för att fortsätta.",
     submitting: "Skickar...",
@@ -704,7 +721,7 @@ export const sv = {
     sending: "Skickar din förfrågan...",
     sendFailed: "Det gick inte att skicka just nu. Försök igen lite senare.",
     success:
-      "Tack! Din förfrågan är skickad. Studion återkopplar normalt inom 24 timmar via e-post eller telefon — dygnet runt, alla dagar.",
+      "Tack! Din förfrågan är skickad. Vi återkopplar normalt inom 24 timmar via e-post eller telefon — dygnet runt, alla dagar.",
 
     errorStyle: "Fyll i tatueringsstil.",
     errorPlacement: "Fyll i placering.",

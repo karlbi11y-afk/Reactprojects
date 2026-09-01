@@ -265,6 +265,42 @@ function hasEnoughDetailsForCalendar(formData) {
   );
 }
 
+// Stil, placering och storlek göms när kunden byter till konsultation, men de
+// ligger kvar i state så att ett byte tillbaka inte tömmer fälten. Allt som
+// LÄMNAR formuläret måste därför läsa detaljerna härifrån — annars följer
+// värden kunden övergav med i submit och tidsätter konsultationen efter en
+// storlek som inte längre gäller.
+function getLeadDetailFields(formData) {
+  const isConsultation = formData.bookingType === "consultation";
+
+  return {
+    tattooStyle: isConsultation ? "" : formData.tattooStyle,
+    placement: isConsultation ? "" : formData.placement,
+    size: isConsultation ? "" : formData.size
+  };
+}
+
+// Förhandsvisningen kostar ett anrop per körning och har ett eget tak per minut
+// i backenden (punkt 9). Strukturerade fält byts med ett klick och ska kännas
+// direkt; beskrivningen skrivs tecken för tecken och tål att vänta längre.
+const PREVIEW_DEBOUNCE_MS = 300;
+const DESCRIPTION_PREVIEW_DEBOUNCE_MS = 800;
+
+const PREVIEW_PAYLOAD_FIELDS = [
+  "bookingType",
+  "tattooStyle",
+  "placement",
+  "size",
+  "budget",
+  "description"
+];
+
+function sameLeadPreviewPayload(a, b) {
+  return PREVIEW_PAYLOAD_FIELDS.every(
+    (field) => String(a?.[field] ?? "") === String(b?.[field] ?? "")
+  );
+}
+
 function clearRequestedTimeSelection(currentFormData, requestedDurationMinutes = "") {
   return {
     ...currentFormData,
@@ -382,7 +418,11 @@ export function StudioLeadFormEnhanced({
   titleText = "",
   introText = "",
   successPreviewText = "",
-  previewMode = false
+  previewMode = false,
+  // Sätts BARA av /studio-preview/<slug> på marknadssajten, som finns just för
+  // att testa formuläret mot en riktig studio i CRM. Alla andra
+  // förhandsvisningar ska vara läsbara, inte skarpa.
+  allowPreviewSubmit = false
 }) {
   const { t, tList, locale, language } = useLanguage();
   const [formData, setFormData] = useState(() => buildInitialForm());
@@ -451,14 +491,34 @@ export function StudioLeadFormEnhanced({
   const [paymentIntentId, setPaymentIntentId] = useState(null);
   const [paymentReady, setPaymentReady] = useState(false); // true after PaymentIntent created
   const [paymentSuccess, setPaymentSuccess] = useState(null); // { amountSek, studioName } after confirmed payment
+  // Sätts när Stripe-betalningen gått igenom men lead-POST:en misslyckades.
+  // Kunden är då redan debiterad, så nästa försök MÅSTE gå med samma
+  // paymentIntentId. Nollades det här (som tidigare) hamnade kunden tillbaka på
+  // "Betala"-knappen, som skapar en NY PaymentIntent — och drar pengarna igen.
+  // Backenden dedupar på paymentRecord.paymentIntentId, så ett omförsök med
+  // samma id är ofarligt även om det första försöket hann skriva leadet.
+  const [paidPaymentIntentId, setPaidPaymentIntentId] = useState(null);
 
-  const canSubmit = Boolean(studio?.slug);
+  // Slugen avgör om det finns en studio att skicka TILL. previewMode avgör om
+  // den här sidan FÅR skicka. CRM:ets live-preview renderas mot en riktig slug,
+  // så utan den andra halvan kan studion som tittar på sin egen sida skapa ett
+  // skarpt lead — och med Stripe Connect på hamna i ett riktigt kortformulär
+  // mot sitt eget konto.
+  const hasStudioSlug = Boolean(studio?.slug);
+  const canSubmit = hasStudioSlug && (!previewMode || allowPreviewSubmit);
   const { hasAcceptedConsent, openLegalModal } = useLegalConsent();
   const fileInputRef = useRef(null);
   const previewRequestIdRef = useRef(0);
+  // Punkt 9: förhandsvisningen har ett tak per minut, och varje anrop kör
+  // bokningsreglerna hos studion. Skicka därför aldrig samma frågeställning två
+  // gånger, och håll koll på om det finns ett tidigare svar att falla tillbaka på.
+  const lastPreviewPayloadRef = useRef(null);
+  const lastPreviewDataRef = useRef(null);
   const formTopRef = useRef(null);
   const bookingFlow = studio?.bookingFlow;
-  const canShowCalendar = Boolean(canSubmit && bookingFlow?.enabled);
+  // Kalendern hänger på slugen, inte på inskickningen: förhandsvisningen ska
+  // visa tidssteget precis som kunden ser det — den ska bara inte kunna boka.
+  const canShowCalendar = Boolean(hasStudioSlug && bookingFlow?.enabled);
 
   const steps = useMemo(() => {
     return [
@@ -479,10 +539,7 @@ export function StudioLeadFormEnhanced({
     }
   }, [studio?.payment?.stripePublishableKey, studio?.payment?.stripeConnectAccountId]);
 
-  const needsPayment = Boolean(
-    studio?.payment?.stripeConnectReady &&
-    (studio?.payment?.depositRequired || studio?.payment?.bookingFeeEnabled)
-  );
+  // needsPayment definieras längre ner — den beror på requiresTimeSelection.
 
   function getPaymentAmount() {
     if (!studio?.payment) return 0;
@@ -498,9 +555,7 @@ export function StudioLeadFormEnhanced({
       email: formData.email,
       phone: formData.phone,
       bookingType: formData.bookingType,
-      tattooStyle: formData.tattooStyle,
-      placement: formData.placement,
-      size: formData.size,
+      ...getLeadDetailFields(formData),
       budget: formData.budget,
       description: formData.description,
       preferredSlots: formData.preferredSlots,
@@ -531,16 +586,37 @@ export function StudioLeadFormEnhanced({
     () => weeks[visibleWeekIndex] || null,
     [weeks, visibleWeekIndex]
   );
+  // Läs eligibility ur svaret, inte ur availability.state. Med "success" i
+  // villkoret slocknade grinden vid varje omhämtning: knappen gick från "Gå
+  // till betalning" till "Skicka förfrågan" och rutan skrev "du betalar inget
+  // nu" trots vald tid — och den kunden slapp ifrån depositionen.
   const requiresTimeSelection = Boolean(
     canShowCalendar &&
       hasEnoughDetails &&
-      availability.state === "success" &&
       availability.data?.eligibleForDirectBooking &&
       weeks.some((w) => w.days.some((d) => d.slots.length > 0))
   );
 
+  // Punkt 12: ta bara betalt när en tid faktiskt bokas. Backenden skapar bara en
+  // bokning när bokningsreglerna landar i ready_to_schedule OCH förfrågan bär ett
+  // tidsfönster (publicLeadBookingBotService.js). Går ingen direktbokning —
+  // manuell granskning, avstängt bokningsflöde eller ingen vald tid — tas ingen
+  // betalning: förfrågan landar som en vanlig lead och studion begär
+  // depositionen när de bekräftar tiden.
+  const prepaymentConfigured = Boolean(
+    studio?.payment?.depositRequired || studio?.payment?.bookingFeeEnabled
+  );
+  const willBookDirectly = Boolean(
+    requiresTimeSelection && (formData.preferredSlots?.length || 0) > 0
+  );
+  const needsPayment = Boolean(
+    studio?.payment?.stripeConnectReady && prepaymentConfigured && willBookDirectly
+  );
+
   useEffect(() => {
     previewRequestIdRef.current += 1;
+    lastPreviewPayloadRef.current = null;
+    lastPreviewDataRef.current = null;
     setFormData(buildInitialForm());
     setStatus({ state: "idle", message: "" });
     setAvailability(createAvailabilityState());
@@ -554,59 +630,131 @@ export function StudioLeadFormEnhanced({
   useEffect(() => {
     previewRequestIdRef.current += 1;
     if (!canShowCalendar) {
+      lastPreviewPayloadRef.current = null;
+      lastPreviewDataRef.current = null;
       setAvailability(createAvailabilityState());
       setVisibleWeekIndex(0);
       return;
     }
     if (!hasEnoughDetails) {
+      lastPreviewPayloadRef.current = null;
+      lastPreviewDataRef.current = null;
       setAvailability(createAvailabilityState());
       setVisibleWeekIndex(0);
       setFormData((current) => clearRequestedTimeSelection(current));
       return;
     }
+
+    const payload = {
+      bookingType: formData.bookingType,
+      ...getLeadDetailFields(formData),
+      budget: formData.budget,
+      description: formData.description
+    };
+    const previousPayload = lastPreviewPayloadRef.current;
+
+    // Samma frågeställning som sist ger samma svar. Effekten körs om på fler
+    // saker än vad estimatet faktiskt beror på (t.ex. språkbyte), och varje
+    // överflödigt anrop äter av taket per minut.
+    if (previousPayload && sameLeadPreviewPayload(previousPayload, payload)) return;
+
+    // Ändras BARA beskrivningen skriver kunden — vänta längre. Ändras ett
+    // strukturerat fält (typ, storlek, placering) är det ett klick, och där
+    // ska kalendern uppdateras direkt.
+    const debounceMs =
+      previousPayload &&
+      sameLeadPreviewPayload(
+        { ...previousPayload, description: "" },
+        { ...payload, description: "" }
+      )
+        ? DESCRIPTION_PREVIEW_DEBOUNCE_MS
+        : PREVIEW_DEBOUNCE_MS;
+
     let active = true;
     const timeoutId = setTimeout(() => {
-      setAvailability(
-        createAvailabilityState({ state: "loading", message: t("leadForm.checkingAvailability") })
+      setAvailability((current) =>
+        createAvailabilityState({
+          state: "loading",
+          message: t("leadForm.checkingAvailability"),
+          // Behåll förra svaret. Nollades det föll requiresTimeSelection till
+          // false mitt i flödet, och då slog både steg 2-spärren och
+          // betalgrinden om utan att något faktiskt hade ändrats.
+          data: current.data
+        })
       );
-      previewPublicStudioBooking(studio.slug, {
-        tattooStyle: formData.tattooStyle,
-        placement: formData.placement,
-        size: formData.size,
-        budget: formData.budget,
-        description: formData.description
-      })
+      lastPreviewPayloadRef.current = payload;
+      previewPublicStudioBooking(studio.slug, payload)
         .then((response) => {
           if (!active) return;
+          lastPreviewDataRef.current = response;
           setAvailability(createAvailabilityState({ state: "success", data: response }));
           setVisibleWeekIndex(0);
           setFormData((current) => {
-            const allSlotTimes = new Set(
-              (response?.dates || []).flatMap((d) => d.slots?.map((s) => s.startTime) || [])
+            // A changed estimate resizes every slot. Keeping a selection whose
+            // startTime survived but whose endTime came from the previous
+            // estimate submitted a window with the wrong length, and the
+            // backend then sent the request to manual review for a duration
+            // mismatch. Re-read the kept selection from the fresh response so
+            // endTime, durationMinutes and label all come from this estimate.
+            const freshSlotsByStartTime = new Map(
+              (response?.dates || []).flatMap((d) =>
+                (d.slots || []).map((slot) => [slot.startTime, slot])
+              )
             );
-            const stillValid = (current.preferredSlots || []).filter((s) => allSlotTimes.has(s.startTime));
+            const stillValid = (current.preferredSlots || [])
+              .map((slot) => freshSlotsByStartTime.get(slot.startTime))
+              .filter(Boolean)
+              .map((slot) => ({
+                startTime: slot.startTime,
+                endTime: slot.endTime,
+                durationMinutes: slot.durationMinutes,
+                label: slot.label
+              }));
             return {
               ...current,
               preferredSlots: stillValid,
-              requestedDurationMinutes: String(response?.suggestedDurationMinutes || current.requestedDurationMinutes || "")
+              requestedDurationMinutes: String(
+                stillValid[0]?.durationMinutes ||
+                  response?.suggestedDurationMinutes ||
+                  current.requestedDurationMinutes ||
+                  ""
+              )
             };
           });
         })
         .catch((error) => {
           if (!active) return;
+          // Ett misslyckat anrop ska kunna göras om — annars hoppas nästa
+          // körning över som "samma payload".
+          lastPreviewPayloadRef.current = null;
+
+          const previousData = lastPreviewDataRef.current;
+
+          // Punkt 9: ett 429 (eller vilket nätverksfel som helst) slog ut hela
+          // tidssteget — kalendern försvann och kunden stod med ett rött fel
+          // och ingen väg vidare. Finns ett tidigare svar behålls det: kalendern
+          // står kvar och kunden väljer om på ett klick.
+          //
+          // Urvalet måste ändå bort. Beskrivningen påverkar estimatet
+          // (publicLeadBookingBotService.js), så en tid som var rätt längd före
+          // ändringen kan vara fel längd efter den — och backenden skickar då
+          // förfrågan till manuell granskning EFTER att depositionen dragits.
+          // Behåll hellre kalendern än tiden.
           setAvailability(
-            createAvailabilityState({
-              state: "error",
-              message: error.message || t("leadForm.availabilityError")
-            })
+            previousData
+              ? createAvailabilityState({
+                  state: "stale",
+                  message: t("leadForm.availabilityStale"),
+                  data: previousData
+                })
+              : createAvailabilityState({
+                  state: "error",
+                  message: error.message || t("leadForm.availabilityError")
+                })
           );
-          setFormData((current) => ({
-            ...current,
-            preferredSlots: [],
-            requestedDurationMinutes: ""
-          }));
+          setFormData((current) => clearRequestedTimeSelection(current));
         });
-    }, 300);
+    }, debounceMs);
     return () => {
       active = false;
       clearTimeout(timeoutId);
@@ -615,6 +763,9 @@ export function StudioLeadFormEnhanced({
     canShowCalendar,
     hasEnoughDetails,
     studio?.slug,
+    // Typbytet ändrar både vilka detaljer som skickas och hur lång tiden blir,
+    // så förhandsvisningen måste hämtas om.
+    formData.bookingType,
     formData.tattooStyle,
     formData.placement,
     formData.size,
@@ -718,6 +869,12 @@ export function StudioLeadFormEnhanced({
       if (fieldsToValidate.some((f) => computeFieldError(f, formData, t))) return;
     }
     if (stepId === "time") {
+      // Under första hämtningen finns inga tider att välja. Utan spärren
+      // klickade kunden sig förbi kalendern och landade på steg 3 utan tid.
+      if (isCheckingAvailability) {
+        setStatus({ state: "error", message: t("leadForm.checkingAvailability") });
+        return;
+      }
       if (requiresTimeSelection && (!formData.preferredSlots || formData.preferredSlots.length === 0)) {
         setStatus({ state: "error", message: t("leadForm.pickTimeFirst") });
         return;
@@ -739,6 +896,7 @@ export function StudioLeadFormEnhanced({
     const response = await createPublicStudioLead(studio.slug, {
       ...formData,
       bookingType: formData.bookingType || "tattoo_session",
+      ...getLeadDetailFields(formData),
       // Språket kunden fyllde i formuläret på — CRM:et markerar leadet så att
       // studion vet att svara på engelska.
       language,
@@ -779,12 +937,20 @@ export function StudioLeadFormEnhanced({
     setPaymentReady(false);
     setPaymentIntentClientSecret(null);
     setPaymentIntentId(null);
+    setPaidPaymentIntentId(null);
     clearDraft();
     if (fileInputRef.current) fileInputRef.current.value = "";
+    scrollToTop();
   }
 
   async function handleSubmit(event) {
     event.preventDefault();
+    // Betalningen är redan dragen. Vidare härifrån skulle gå in i
+    // needsPayment-grenen nedan och skapa en ny PaymentIntent.
+    if (paidPaymentIntentId) {
+      await registerPaidLead(paidPaymentIntentId);
+      return;
+    }
     if (!hasAcceptedConsent) {
       setStatus({
         state: "error",
@@ -796,7 +962,9 @@ export function StudioLeadFormEnhanced({
     if (!canSubmit) {
       setStatus({
         state: "error",
-        message: studio?.previewDisabledMessage || t("leadForm.previewDisabled")
+        message:
+          studio?.previewDisabledMessage ||
+          (hasStudioSlug ? t("leadForm.previewReadOnly") : t("leadForm.previewDisabled"))
       });
       return;
     }
@@ -814,7 +982,12 @@ export function StudioLeadFormEnhanced({
           metadata: {
             leadName: formData.name,
             leadEmail: formData.email,
-            studioSlug: studio.slug
+            studioSlug: studio.slug,
+            // Leadet finns inte än — det skapas efter betalningen — så utkastet
+            // är det enda som kan knyta ihop PaymentIntenten med CRM:et.
+            // Backenden nycklar idempotensen på den, och webhooken hittar
+            // tillbaka hit om kunden betalar och stänger fliken.
+            ...(draftId ? { draftId } : {})
           }
         });
         setPaymentIntentClientSecret(pi.clientSecret);
@@ -842,8 +1015,12 @@ export function StudioLeadFormEnhanced({
     }
   }
 
-  // Kallas av PaymentStep efter lyckad Stripe-betalning
-  const handlePaymentConfirmed = useCallback(async (confirmedPaymentIntentId) => {
+  // Kallas av PaymentStep efter lyckad Stripe-betalning, och av kunden själv om
+  // registreringen behöver göras om. Betalnings-id:t behålls vid fel — se
+  // kommentaren vid paidPaymentIntentId.
+  const registerPaidLead = useCallback(async (confirmedPaymentIntentId) => {
+    if (!confirmedPaymentIntentId) return;
+    setPaidPaymentIntentId(confirmedPaymentIntentId);
     setStatus({ state: "loading", message: t("leadForm.payRegistering") });
     try {
       await submitLead({ paymentIntentId: confirmedPaymentIntentId });
@@ -852,9 +1029,6 @@ export function StudioLeadFormEnhanced({
         state: "error",
         message: error.message || t("leadForm.paySavedFailed")
       });
-      setPaymentReady(false);
-      setPaymentIntentClientSecret(null);
-      setPaymentIntentId(null);
     }
   }, [formData, draftId, inspirationImage, studio, t]);
 
@@ -914,6 +1088,16 @@ export function StudioLeadFormEnhanced({
             {successPreviewText}
           </p>
         </div>
+      ) : null}
+
+      {/* Kvittensen MÅSTE ligga på toppnivå. submitLead kör setCurrentStep(0)
+          direkt efter setStatus, så kontaktsteget — där övriga statusmeddelanden
+          bor — avmonteras i samma render. Låg den där blev formuläret bara tomt
+          och kunden fick aldrig veta att förfrågan gick fram. */}
+      {status.state === "success" && status.message ? (
+        <p className="form-status form-status--success" role="status" aria-live="polite">
+          {status.message}
+        </p>
       ) : null}
 
       <div
@@ -1117,6 +1301,10 @@ export function StudioLeadFormEnhanced({
               id="lead-description"
               name="description"
               rows="5"
+              // Samma tak som backendens schema (publicSchemas.js). Utan det
+              // kan en inklistrad text ge 400 från både booking-preview och
+              // /leads, och preview-felet nollar kundens valda tid.
+              maxLength={10000}
               placeholder={
                 formData.bookingType === "consultation"
                   ? t("leadForm.descriptionPlaceholderConsultation")
@@ -1183,8 +1371,14 @@ export function StudioLeadFormEnhanced({
           {availability.state === "error" ? (
             <p className="form-status form-status--error">{availability.message}</p>
           ) : null}
+          {/* Kontrollen misslyckades men vi har ett tidigare svar: kalendern
+              nedan står kvar och kundens valda tid med den (punkt 9). */}
+          {availability.state === "stale" ? (
+            <p className="form-status form-status--muted">{availability.message}</p>
+          ) : null}
 
-          {availability.state === "success" && weeks.some((w) => w.days.some((d) => d.slots.length > 0)) ? (
+          {(availability.state === "success" || availability.state === "stale") &&
+          weeks.some((w) => w.days.some((d) => d.slots.length > 0)) ? (
             <section className="studio-booking-picker">
               {visibleWeek ? (
                 <div className="week-picker">
@@ -1285,7 +1479,7 @@ export function StudioLeadFormEnhanced({
               onClick={handleNext}
               disabled={isCheckingAvailability}
             >
-              Nästa steg
+              {t("common.next")}
             </button>
           </div>
         </div>
@@ -1343,27 +1537,56 @@ export function StudioLeadFormEnhanced({
             </label>
           </div>
 
-          {studio?.payment?.depositRequired || studio?.payment?.bookingFeeEnabled ? (
+          {prepaymentConfigured ? (
+            // Punkt 12: rutan måste följa betalgrinden. Utan needsPayment står det
+            // "betalas vid bokning" även när formuläret inte tar betalt alls.
             <div className="form-payment-notice">
               {studio.payment.depositRequired ? (
                 <p>
                   <strong>{t("leadForm.depositLabel")}</strong>{" "}
-                  {t("leadForm.depositText", { amount: studio.payment.depositAmountSek })}
+                  {t(needsPayment ? "leadForm.depositText" : "leadForm.depositLaterText", {
+                    amount: studio.payment.depositAmountSek
+                  })}
                 </p>
               ) : null}
-              {studio.payment.bookingFeeEnabled ? (
+              {/* Punkt 5: samma företräde som getPaymentAmount() ovan — kunden
+                  debiteras ETT belopp och depositionen går före. Utan villkoret
+                  läser kunden "Deposition 500 kr" och "Bokningsavgift 200 kr"
+                  men debiteras 500. Backend normaliserar bort kombinationen,
+                  det här är andra spärren. */}
+              {studio.payment.bookingFeeEnabled && !studio.payment.depositRequired ? (
                 <p>
                   <strong>{t("leadForm.feeLabel")}</strong>{" "}
-                  {t("leadForm.feeText", { amount: studio.payment.bookingFeeAmountSek })}
+                  {t(needsPayment ? "leadForm.feeText" : "leadForm.feeLaterText", {
+                    amount: studio.payment.bookingFeeAmountSek
+                  })}
                 </p>
               ) : null}
-              {studio.payment.stripeConnectReady ? (
+              {needsPayment ? (
                 <p className="form-payment-notice-stripe">{t("leadForm.stripeNote")}</p>
               ) : null}
             </div>
           ) : null}
 
-          {paymentReady && stripePromise && paymentIntentClientSecret ? (
+          {paidPaymentIntentId ? (
+            <div className="form-payment-retry">
+              <p className="form-payment-retry-text" role="status">
+                {t("leadForm.payRegisterRetryInfo")}
+              </p>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => registerPaidLead(paidPaymentIntentId)}
+                disabled={status.state === "loading"}
+              >
+                {status.state === "loading"
+                  ? t("leadForm.payRegistering")
+                  : t("leadForm.payRegisterRetry")}
+              </button>
+            </div>
+          ) : null}
+
+          {!paidPaymentIntentId && paymentReady && stripePromise && paymentIntentClientSecret ? (
             <Elements
               stripe={stripePromise}
               options={{
@@ -1374,7 +1597,7 @@ export function StudioLeadFormEnhanced({
               <PaymentStep
                 amountSek={getPaymentAmount()}
                 paymentIntentId={paymentIntentId}
-                onConfirmed={handlePaymentConfirmed}
+                onConfirmed={registerPaidLead}
                 onCancel={() => { setPaymentReady(false); setPaymentIntentClientSecret(null); setPaymentIntentId(null); setStatus({ state: "idle", message: "" }); }}
                 submitting={status.state === "loading"}
               />
@@ -1384,14 +1607,14 @@ export function StudioLeadFormEnhanced({
           <FormLegalLinks />
 
           {!canSubmit ? (
-            <p className="form-status form-status--muted">{t("leadForm.previewNotice")}</p>
+            <p className="form-status form-status--muted">
+              {hasStudioSlug ? t("leadForm.previewReadOnly") : t("leadForm.previewNotice")}
+            </p>
           ) : null}
 
-          {status.message ? (
+          {status.message && status.state !== "success" ? (
             <p
-              className={`form-status ${
-                status.state === "success" ? "form-status--success" : "form-status--error"
-              }`}
+              className="form-status form-status--error"
               role="status"
               aria-live="polite"
             >
@@ -1399,10 +1622,10 @@ export function StudioLeadFormEnhanced({
             </p>
           ) : null}
 
-          {!paymentReady ? (
+          {!paymentReady && !paidPaymentIntentId ? (
             <div className="form-step-nav">
               <button className="btn btn-secondary" type="button" onClick={handleBack}>
-                Tillbaka
+                {t("common.back")}
               </button>
               <button
                 className="btn btn-primary"
