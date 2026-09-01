@@ -1,20 +1,10 @@
-function getClientAddress(request) {
-  const forwardedFor = request.get("x-forwarded-for");
-
-  if (forwardedFor) {
-    return forwardedFor
-      .split(",")
-      .map((value) => value.trim())
-      .find(Boolean);
-  }
-
-  return request.ip || request.socket?.remoteAddress || "unknown";
-}
+import { resolveClientAddress } from "../utils/clientAddress.js";
 
 const submissionState = new Map();
 const draftSaveState = new Map();
 const publicReadState = new Map();
 const visitTrackingState = new Map();
+const bookingPreviewState = new Map();
 
 const submissionWindowMs = Number(process.env.SUBMISSION_RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000);
 const submissionMaxRequests = Number(process.env.SUBMISSION_RATE_LIMIT_MAX || 6);
@@ -24,9 +14,13 @@ const publicReadWindowMs = Number(process.env.PUBLIC_READ_RATE_LIMIT_WINDOW_MS |
 const publicReadMaxRequests = Number(process.env.PUBLIC_READ_RATE_LIMIT_MAX || 20);
 const visitTrackingWindowMs = Number(process.env.VISIT_TRACKING_RATE_LIMIT_WINDOW_MS || 60 * 1000);
 const visitTrackingMaxRequests = Number(process.env.VISIT_TRACKING_RATE_LIMIT_MAX || 60);
+const bookingPreviewWindowMs = Number(
+  process.env.BOOKING_PREVIEW_RATE_LIMIT_WINDOW_MS || 60 * 1000
+);
+const bookingPreviewMaxRequests = Number(process.env.BOOKING_PREVIEW_RATE_LIMIT_MAX || 40);
 
 function enforceRateLimit(request, scope, { state, windowMs, maxRequests, message }) {
-  const key = `${scope}:${getClientAddress(request)}`;
+  const key = `${scope}:${resolveClientAddress(request)}`;
   const now = Date.now();
   const activeAttempts = (state.get(key) || []).filter((ts) => now - ts < windowMs);
 
@@ -55,6 +49,26 @@ export function enforcePublicReadRateLimit(request, scope) {
     state: publicReadState,
     windowMs: publicReadWindowMs,
     maxRequests: publicReadMaxRequests,
+    message:
+      "Vi har tagit emot många förfrågningar från samma anslutning. Vänta en kort stund och försök igen."
+  });
+}
+
+/**
+ * Bokningsförhandsvisningen: eget tak, inte publicReadRateLimit.
+ *
+ * Formuläret anropar vägen 300 ms efter varje paus i beskrivningsfältet
+ * (StudioLeadFormEnhanced.jsx), så en kund som skriver eftertänksamt gör
+ * tiotals anrop på en minut — helt legitimt. På 20/min slog det i taket, och
+ * 429:an landade i formulärets .catch som nollade kundens valda tid. Delad hink
+ * med sidladdningen och studiolistan gjorde det värre. Samma tak som
+ * CRM-backendens bookingPreviewLimiter.
+ */
+export function enforceBookingPreviewRateLimit(request, scope) {
+  return enforceRateLimit(request, scope, {
+    state: bookingPreviewState,
+    windowMs: bookingPreviewWindowMs,
+    maxRequests: bookingPreviewMaxRequests,
     message:
       "Vi har tagit emot många förfrågningar från samma anslutning. Vänta en kort stund och försök igen."
   });

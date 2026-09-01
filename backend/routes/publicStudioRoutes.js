@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  enforceBookingPreviewRateLimit,
   enforcePublicReadRateLimit,
   enforceSubmissionRateLimit,
   enforceDraftSaveRateLimit,
@@ -89,35 +90,8 @@ publicStudioRouter.post("/:slug/visit", async (req, res) => {
   return res.status(204).end();
 });
 
-publicStudioRouter.get("/:slug/availability", async (req, res) => {
-  const rateLimit = enforcePublicReadRateLimit(req, "studio-public-availability");
-
-  if (rateLimit.limited) {
-    return res.status(429).json({ message: rateLimit.message });
-  }
-
-  try {
-    const { response, payload } = await requestCrmPublicApi(
-      `/studios/${encodeURIComponent(req.params.slug)}/availability`,
-      { query: req.query, request: req }
-    );
-
-    if (!response.ok) {
-      return res.status(response.status).json({
-        message: getCrmProxyMessage(payload, "Kunde inte hämta lediga tider just nu.")
-      });
-    }
-
-    return res.status(response.status).json(payload || { data: null });
-  } catch {
-    return res.status(502).json({
-      message: "Kunde inte ansluta till CRM-backenden för att läsa lediga tider."
-    });
-  }
-});
-
 publicStudioRouter.post("/:slug/booking-preview", async (req, res) => {
-  const rateLimit = enforcePublicReadRateLimit(req, "studio-public-booking-preview");
+  const rateLimit = enforceBookingPreviewRateLimit(req, "studio-public-booking-preview");
 
   if (rateLimit.limited) {
     return res.status(429).json({ message: rateLimit.message });

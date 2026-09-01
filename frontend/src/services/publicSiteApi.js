@@ -91,21 +91,6 @@ export function getPublicStudioBySlug(slug) {
   return request(`/api/public/studios/${encodeURIComponent(slug)}`);
 }
 
-export function getPublicStudioAvailability(slug, options = {}) {
-  const params = new URLSearchParams();
-
-  Object.entries(options).forEach(([key, value]) => {
-    const normalizedValue = String(value ?? "").trim();
-
-    if (normalizedValue) {
-      params.set(key, normalizedValue);
-    }
-  });
-
-  const suffix = params.size ? `?${params.toString()}` : "";
-  return request(`/api/public/studios/${encodeURIComponent(slug)}/availability${suffix}`);
-}
-
 export function previewPublicStudioBooking(slug, payload) {
   return request(`/api/public/studios/${encodeURIComponent(slug)}/booking-preview`, {
     method: "POST",

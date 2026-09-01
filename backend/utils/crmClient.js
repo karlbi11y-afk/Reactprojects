@@ -1,3 +1,5 @@
+import { clientForwardingHeaders } from "./clientAddress.js";
+
 function normalizeUrl(url) {
   return url?.trim().replace(/\/+$/, "");
 }
@@ -6,17 +8,19 @@ export const CRM_API_BASE_URL = normalizeUrl(
   process.env.CRM_API_BASE_URL || "http://localhost:4000"
 );
 
-// CRM-backenden läser besökarens IP ur x-forwarded-for och avgör bot/app-webbläsare
-// ur user-agent. Utan vidarebefordran ser den bara den här proxyns IP och saknar
-// UA helt: rate limits blir gemensamma för hela sajten och botfiltret blir blint.
+// CRM-backenden nycklar sina rate limits på besökarens IP och avgör
+// bot/app-webbläsare ur user-agent. Utan vidarebefordran ser den bara den här
+// proxyns IP och saknar UA helt: rate limits blir gemensamma för hela sajten
+// och botfiltret blir blint.
+//
+// XFF skickas som EN adress — den clientForwardingHeaders räknat fram — inte
+// som kedjan vi fick in. Kedjan bär klientens egna påhittade värden längst fram
+// (punkt 10), och CRM:et kan inte se var vår del av den börjar.
 function forwardedClientHeaders(request) {
   if (!request) return {};
 
-  const forwardedFor =
-    request.get("x-forwarded-for") || request.ip || request.socket?.remoteAddress || "";
-
   return {
-    ...(forwardedFor ? { "X-Forwarded-For": forwardedFor } : {}),
+    ...clientForwardingHeaders(request),
     ...(request.get("user-agent") ? { "User-Agent": request.get("user-agent") } : {})
   };
 }
