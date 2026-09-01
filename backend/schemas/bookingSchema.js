@@ -5,10 +5,18 @@ const optionalStr = (max = 500) =>
 
 export const bookingBodySchema = z
   .object({
-    name: z.string().min(1, "Namn krävs.").max(255, "Namn är för långt."),
-    studio: z.string().min(1, "Studio krävs.").max(255, "Studionamn är för långt."),
+    // `error` täcker även att fältet saknas helt — utan den får kunden Zods
+    // engelska "Invalid input: expected string, received undefined".
+    name: z
+      .string({ error: "Namn krävs." })
+      .min(1, "Namn krävs.")
+      .max(255, "Namn är för långt."),
+    studio: z
+      .string({ error: "Studio krävs." })
+      .min(1, "Studio krävs.")
+      .max(255, "Studionamn är för långt."),
     email: z
-      .string()
+      .string({ error: "E-post krävs." })
       .min(1, "E-post krävs.")
       .max(255, "E-postadressen är för lång.")
       .refine((val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val), {
@@ -17,7 +25,7 @@ export const bookingBodySchema = z
     phone: optionalStr(50),
     message: optionalStr(10000),
     privacyConsent: z.literal(true, {
-      errorMap: () => ({ message: "Du behöver godkänna att vi sparar dina uppgifter." })
+      error: "Du behöver godkänna att vi sparar dina uppgifter."
     }),
     marketingConsent: z.boolean().optional().default(false),
     website: optionalStr(255),

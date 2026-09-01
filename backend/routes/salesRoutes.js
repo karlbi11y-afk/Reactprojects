@@ -9,6 +9,7 @@ import {
   buildCrmSalesLeadPayload
 } from "../utils/crmClient.js";
 import { bookingBodySchema } from "../schemas/bookingSchema.js";
+import { describeValidationIssue } from "../utils/validationMessage.js";
 
 export const salesRouter = Router();
 
@@ -44,10 +45,9 @@ salesRouter.post("/booking", async (req, res) => {
   const parseResult = bookingBodySchema.safeParse(req.body || {});
 
   if (!parseResult.success) {
-    const firstIssue = parseResult.error.issues[0];
-    const field = firstIssue.path.join(".");
-    const message = field ? `${field}: ${firstIssue.message}` : firstIssue.message;
-    return res.status(400).json({ message });
+    // Fältsökvägen är för klienten, inte för kunden — den ligger i `field`.
+    const { field, message } = describeValidationIssue(parseResult.error.issues[0]);
+    return res.status(400).json({ message, field });
   }
 
   const validatedBody = parseResult.data;
