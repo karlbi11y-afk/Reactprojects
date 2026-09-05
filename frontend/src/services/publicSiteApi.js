@@ -59,11 +59,17 @@ async function request(path, options = {}) {
   const textPayload = isJsonResponse ? "" : await response.text().catch(() => "");
 
   if (!response.ok) {
-    throw new Error(
+    const error = new Error(
       payload?.message ||
         getTextErrorMessage(textPayload) ||
         `API-anropet misslyckades (${response.status}).`
     );
+    // Maskinläsbar kod och status vid sidan av texten, så anroparen kan agera på
+    // feltypen (t.ex. INSPIRATION_IMAGE_FAILED) i stället för att matcha på ett
+    // svenskt meddelande som kan ändras eller översättas.
+    if (payload?.code) error.code = payload.code;
+    error.status = response.status;
+    throw error;
   }
 
   return payload?.data ?? payload;

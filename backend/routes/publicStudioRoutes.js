@@ -132,7 +132,12 @@ publicStudioRouter.post("/:slug/leads", async (req, res) => {
 
     if (!response.ok) {
       return res.status(response.status).json({
-        message: getCrmProxyMessage(payload, "Kunde inte skicka förfrågan just nu.")
+        message: getCrmProxyMessage(payload, "Kunde inte skicka förfrågan just nu."),
+        // Felkoden måste följa med hela vägen ut till formuläret. CRM:et märker
+        // t.ex. INSPIRATION_IMAGE_FAILED, och utan koden hade formuläret fått
+        // matcha på den svenska feltexten för att veta att det var bilagan som
+        // fällde inskickningen — och kunden hade blivit utan "skicka utan bild".
+        ...(payload?.code ? { code: payload.code } : {})
       });
     }
 

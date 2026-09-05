@@ -704,6 +704,9 @@ export const en = {
     submit: "Send enquiry",
     sending: "Sending your enquiry...",
     sendFailed: "We couldn't send that right now. Please try again shortly.",
+    imageUploadFailedInfo:
+      "Your inspiration image couldn't be saved. You can send the enquiry without it — the studio will get in touch and can ask for it later.",
+    submitWithoutImage: "Send without the image",
     success:
       "Thanks! Your enquiry has been sent. We normally get back within 24 hours by email or phone — any day of the week.",
 

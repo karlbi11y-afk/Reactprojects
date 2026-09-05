@@ -720,6 +720,11 @@ export const sv = {
     submit: "Skicka förfrågan",
     sending: "Skickar din förfrågan...",
     sendFailed: "Det gick inte att skicka just nu. Försök igen lite senare.",
+    // Visas när servern svarade att det var inspirationsbilden som fällde
+    // inskickningen — bilden väljs på steg 1 och är inte alltid nåbar därifrån.
+    imageUploadFailedInfo:
+      "Inspirationsbilden kunde inte sparas. Du kan skicka förfrågan utan bilden — studion hör av sig och kan be om den sedan.",
+    submitWithoutImage: "Skicka utan bild",
     success:
       "Tack! Din förfrågan är skickad. Vi återkopplar normalt inom 24 timmar via e-post eller telefon — dygnet runt, alla dagar.",
 

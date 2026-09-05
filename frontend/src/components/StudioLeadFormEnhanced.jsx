@@ -21,6 +21,15 @@ import { translateOptionLabel } from "../i18n/optionLabels";
 const OTHER_STYLE_VALUE = "__other__";
 const OTHER_PLACEMENT_VALUE = "__other_placement__";
 
+// CRM:et märker varje fel som kommer ur inspirationsbilden med den här koden
+// (createImageError i publicLeadUploadService). Koden — inte feltexten — är det
+// som avgör om vi erbjuder kunden att skicka utan bilden.
+const INSPIRATION_IMAGE_ERROR_CODE = "INSPIRATION_IMAGE_FAILED";
+
+function isInspirationImageError(error) {
+  return error?.code === INSPIRATION_IMAGE_ERROR_CODE;
+}
+
 /**
  * VIKTIGT om språk i det här formuläret:
  *
@@ -432,6 +441,11 @@ export function StudioLeadFormEnhanced({
   const [inspirationImage, setInspirationImage] = useState(null);
   const [imageProcessing, setImageProcessing] = useState(false);
   const [imageError, setImageError] = useState("");
+  // Sätts när servern svarade att det var inspirationsbilden som fällde
+  // inskickningen. Texten lovar att kunden kan försöka igen utan bild — och
+  // steg 1, där bilden väljs, är oåtkomligt efter en betalning (Tillbaka-knappen
+  // är dold). Utan den här knappen fanns ingen väg vidare alls.
+  const [imageUploadRejected, setImageUploadRejected] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [touched, setTouched] = useState(new Set());
   // Sätts när kunden valde "Annat" i stil-dropdownen och vi därför bytte till
@@ -541,11 +555,40 @@ export function StudioLeadFormEnhanced({
 
   // needsPayment definieras längre ner — den beror på requiresTimeSelection.
 
+  const bookingTypeForPrepayment = formData.bookingType || "tattoo_session";
+
+  // Vad DEN HÄR bokningstypen kostar i förskott.
+  //
+  // Studion väljer sort (deposition ELLER bokningsavgift), omfattning
+  // (tatuering / konsultation / båda) och kan sätta ett eget belopp för
+  // konsultationen. Servern räknar ut resultatet med samma funktion som
+  // bokningen och betalvägen använder (resolveCustomerPrepaymentSek) och skickar
+  // det per bokningstyp. Formuläret ska ALDRIG härleda det ur flaggorna själv —
+  // det var precis så konsultationen kunde debiteras en deposition som bokningen
+  // sedan sa "krävs inte" om.
+  const prepayment = useMemo(() => {
+    const payment = studio?.payment;
+    if (!payment) return { kind: null, amountSek: 0 };
+
+    const fromServer = payment.prepaymentByBookingType?.[bookingTypeForPrepayment];
+    if (fromServer) {
+      return { kind: fromServer.kind || null, amountSek: fromServer.amountSek || 0 };
+    }
+
+    // Fallback för en backend som ännu inte skickar kartan (repona deployas var
+    // för sig). Speglar det gamla beteendet plus typregeln: depositionen gällde
+    // aldrig konsultationer.
+    if (payment.depositRequired && bookingTypeForPrepayment !== "consultation") {
+      return { kind: "deposit", amountSek: payment.depositAmountSek || 0 };
+    }
+    if (payment.bookingFeeEnabled) {
+      return { kind: "booking_fee", amountSek: payment.bookingFeeAmountSek || 0 };
+    }
+    return { kind: null, amountSek: 0 };
+  }, [studio?.payment, bookingTypeForPrepayment]);
+
   function getPaymentAmount() {
-    if (!studio?.payment) return 0;
-    if (studio.payment.depositRequired) return studio.payment.depositAmountSek;
-    if (studio.payment.bookingFeeEnabled) return studio.payment.bookingFeeAmountSek;
-    return 0;
+    return prepayment.amountSek || 0;
   }
 
   const hasEnoughDetails = useMemo(() => hasEnoughDetailsForCalendar(formData), [formData]);
@@ -603,9 +646,7 @@ export function StudioLeadFormEnhanced({
   // manuell granskning, avstängt bokningsflöde eller ingen vald tid — tas ingen
   // betalning: förfrågan landar som en vanlig lead och studion begär
   // depositionen när de bekräftar tiden.
-  const prepaymentConfigured = Boolean(
-    studio?.payment?.depositRequired || studio?.payment?.bookingFeeEnabled
-  );
+  const prepaymentConfigured = Boolean(prepayment.kind);
   const willBookDirectly = Boolean(
     requiresTimeSelection && (formData.preferredSlots?.length || 0) > 0
   );
@@ -656,7 +697,21 @@ export function StudioLeadFormEnhanced({
     // Samma frågeställning som sist ger samma svar. Effekten körs om på fler
     // saker än vad estimatet faktiskt beror på (t.ex. språkbyte), och varje
     // överflödigt anrop äter av taket per minut.
-    if (previousPayload && sameLeadPreviewPayload(previousPayload, payload)) return;
+    if (previousPayload && sameLeadPreviewPayload(previousPayload, payload)) {
+      // Ingen ny hämtning behövs — men körningen som satte "loading" är redan
+      // avlivad av sin egen cleanup, så det finns varken timer eller anrop kvar
+      // som kan ta oss ur det läget. Ändrar kunden ett fält och ångrar sig innan
+      // debouncen löpt ut hamnar vi här, och utan återställningen fastnar
+      // formuläret i "Kontrollerar tillgänglighet…" med "Nästa" utgråad för
+      // gott. Refen pekar bara på en payload vars svar faktiskt användes (se
+      // cleanupen), så lastPreviewDataRef hör ihop med just den här payloaden.
+      setAvailability((current) =>
+        current.state === "loading"
+          ? createAvailabilityState({ state: "success", data: lastPreviewDataRef.current })
+          : current
+      );
+      return;
+    }
 
     // Ändras BARA beskrivningen skriver kunden — vänta längre. Ändras ett
     // strukturerat fält (typ, storlek, placering) är det ett klick, och där
@@ -670,22 +725,31 @@ export function StudioLeadFormEnhanced({
         ? DESCRIPTION_PREVIEW_DEBOUNCE_MS
         : PREVIEW_DEBOUNCE_MS;
 
+    // Punkt 7: gå till "loading" redan när debounce-timern startar, inte när
+    // anropet går. Under debouncen (300 ms för strukturerade fält, 800 ms efter
+    // en ändring i beskrivningen) låg läget annars kvar på "idle", och då var
+    // både isCheckingAvailability och requiresTimeSelection false: två snabba
+    // klick på "Nästa" tog kunden till kontaktsteget utan att kalendern ritats,
+    // förfrågan gick in utan tid och direktbokningen föll tyst bort.
+    setAvailability((current) =>
+      createAvailabilityState({
+        state: "loading",
+        message: t("leadForm.checkingAvailability"),
+        // Behåll förra svaret. Nollades det föll requiresTimeSelection till
+        // false mitt i flödet, och då slog både steg 2-spärren och
+        // betalgrinden om utan att något faktiskt hade ändrats.
+        data: current.data
+      })
+    );
+
     let active = true;
+    let applied = false;
     const timeoutId = setTimeout(() => {
-      setAvailability((current) =>
-        createAvailabilityState({
-          state: "loading",
-          message: t("leadForm.checkingAvailability"),
-          // Behåll förra svaret. Nollades det föll requiresTimeSelection till
-          // false mitt i flödet, och då slog både steg 2-spärren och
-          // betalgrinden om utan att något faktiskt hade ändrats.
-          data: current.data
-        })
-      );
       lastPreviewPayloadRef.current = payload;
       previewPublicStudioBooking(studio.slug, payload)
         .then((response) => {
           if (!active) return;
+          applied = true;
           lastPreviewDataRef.current = response;
           setAvailability(createAvailabilityState({ state: "success", data: response }));
           setVisibleWeekIndex(0);
@@ -724,6 +788,7 @@ export function StudioLeadFormEnhanced({
         })
         .catch((error) => {
           if (!active) return;
+          applied = true;
           // Ett misslyckat anrop ska kunna göras om — annars hoppas nästa
           // körning över som "samma payload".
           lastPreviewPayloadRef.current = null;
@@ -758,6 +823,15 @@ export function StudioLeadFormEnhanced({
     return () => {
       active = false;
       clearTimeout(timeoutId);
+      // Hann anropet gå i väg men svaret kastas (active === false)? Då får
+      // dedupen inte tro att payloaden redan är hämtad. Annars: kunden ändrar
+      // ett fält och ångrar sig — nästa körning hoppar över som "samma
+      // payload", ingen timer och inget anrop finns kvar, och availability
+      // för alltid kvar i "loading" med "Nästa" utgråad. Har timern inte
+      // hunnit fyra av pekar refen fortfarande på förra payloaden och rörs inte.
+      if (!applied && lastPreviewPayloadRef.current === payload) {
+        lastPreviewPayloadRef.current = null;
+      }
     };
   }, [
     canShowCalendar,
@@ -830,6 +904,7 @@ export function StudioLeadFormEnhanced({
   async function handleImageChange(event) {
     const file = event.target.files?.[0];
     setImageError("");
+    setImageUploadRejected(false);
     if (!file) {
       setInspirationImage(null);
       return;
@@ -851,6 +926,7 @@ export function StudioLeadFormEnhanced({
   function handleRemoveImage() {
     setInspirationImage(null);
     setImageError("");
+    setImageUploadRejected(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -932,6 +1008,7 @@ export function StudioLeadFormEnhanced({
     setFormData(buildInitialForm());
     setVisibleWeekIndex(0);
     setInspirationImage(null);
+    setImageUploadRejected(false);
     setCurrentStep(0);
     setTouched(new Set());
     setPaymentReady(false);
@@ -979,6 +1056,16 @@ export function StudioLeadFormEnhanced({
         const amountSek = getPaymentAmount();
         const pi = await createStudioPaymentIntent(studio.slug, {
           amountSek,
+          // Servern läser samma typregel och vägrar skapa en depositionsintent
+          // för en konsultation. Grinden här är förutsägelsen, den där är
+          // spärren — vägen är publik och oautentiserad.
+          bookingType: bookingTypeForPrepayment,
+          // Den valda luckan. Servern kollar studions minsta framförhållning mot
+          // den HÄR, innan pengarna dras. Kalendern hämtas inte om medan kunden
+          // fyller i kontaktuppgifter, så den sista luckan före gränsen hann
+          // annars passera den — och kunden fick manuell granskning i stället
+          // för en bokning, med depositionen redan dragen.
+          startTime: formData.preferredSlots?.[0]?.startTime || "",
           metadata: {
             leadName: formData.name,
             leadEmail: formData.email,
@@ -1008,12 +1095,39 @@ export function StudioLeadFormEnhanced({
     try {
       await submitLead();
     } catch (error) {
+      if (isInspirationImageError(error)) setImageUploadRejected(true);
       setStatus({
         state: "error",
         message: error.message || t("leadForm.sendFailed")
       });
     }
   }
+
+  // Vägen texten lovar: "försök igen utan bild". Bilden väljs på steg 1, och
+  // efter en betalning är Tillbaka-knappen dold — så det här är kundens enda
+  // sätt att bli av med bilagan som servern inte kunde ta emot.
+  const submitWithoutInspirationImage = useCallback(async () => {
+    setInspirationImage(null);
+    setImageUploadRejected(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    setStatus({
+      state: "loading",
+      message: paidPaymentIntentId ? t("leadForm.payRegistering") : t("leadForm.sending")
+    });
+    try {
+      await submitLead({
+        inspirationImage: null,
+        ...(paidPaymentIntentId ? { paymentIntentId: paidPaymentIntentId } : {})
+      });
+    } catch (error) {
+      setStatus({
+        state: "error",
+        message:
+          error.message ||
+          t(paidPaymentIntentId ? "leadForm.paySavedFailed" : "leadForm.sendFailed")
+      });
+    }
+  }, [formData, draftId, paidPaymentIntentId, studio, t]);
 
   // Kallas av PaymentStep efter lyckad Stripe-betalning, och av kunden själv om
   // registreringen behöver göras om. Betalnings-id:t behålls vid fel — se
@@ -1025,6 +1139,7 @@ export function StudioLeadFormEnhanced({
     try {
       await submitLead({ paymentIntentId: confirmedPaymentIntentId });
     } catch (error) {
+      if (isInspirationImageError(error)) setImageUploadRejected(true);
       setStatus({
         state: "error",
         message: error.message || t("leadForm.paySavedFailed")
@@ -1372,7 +1487,9 @@ export function StudioLeadFormEnhanced({
             <p className="form-status form-status--error">{availability.message}</p>
           ) : null}
           {/* Kontrollen misslyckades men vi har ett tidigare svar: kalendern
-              nedan står kvar och kundens valda tid med den (punkt 9). */}
+              nedan står kvar, men urvalet nollas (punkt 9). Beskrivningen
+              påverkar estimatet, så en tid som hade rätt längd före ändringen
+              kan ha fel längd efter den — kunden väljer om på ett klick. */}
           {availability.state === "stale" ? (
             <p className="form-status form-status--muted">{availability.message}</p>
           ) : null}
@@ -1540,25 +1657,25 @@ export function StudioLeadFormEnhanced({
           {prepaymentConfigured ? (
             // Punkt 12: rutan måste följa betalgrinden. Utan needsPayment står det
             // "betalas vid bokning" även när formuläret inte tar betalt alls.
+            // Punkt 5: kunden debiteras ETT belopp av EN sort. Rutan renderar
+            // därför den sort servern faktiskt räknat fram för den här
+            // bokningstypen — aldrig båda styckena. Förr lästes flaggorna var
+            // för sig, och en studio med båda påslagna visade "Deposition
+            // 500 kr" OCH "Bokningsavgift 200 kr" men debiterade 500.
             <div className="form-payment-notice">
-              {studio.payment.depositRequired ? (
+              {prepayment.kind === "deposit" ? (
                 <p>
                   <strong>{t("leadForm.depositLabel")}</strong>{" "}
                   {t(needsPayment ? "leadForm.depositText" : "leadForm.depositLaterText", {
-                    amount: studio.payment.depositAmountSek
+                    amount: prepayment.amountSek
                   })}
                 </p>
               ) : null}
-              {/* Punkt 5: samma företräde som getPaymentAmount() ovan — kunden
-                  debiteras ETT belopp och depositionen går före. Utan villkoret
-                  läser kunden "Deposition 500 kr" och "Bokningsavgift 200 kr"
-                  men debiteras 500. Backend normaliserar bort kombinationen,
-                  det här är andra spärren. */}
-              {studio.payment.bookingFeeEnabled && !studio.payment.depositRequired ? (
+              {prepayment.kind === "booking_fee" ? (
                 <p>
                   <strong>{t("leadForm.feeLabel")}</strong>{" "}
                   {t(needsPayment ? "leadForm.feeText" : "leadForm.feeLaterText", {
-                    amount: studio.payment.bookingFeeAmountSek
+                    amount: prepayment.amountSek
                   })}
                 </p>
               ) : null}
@@ -1620,6 +1737,24 @@ export function StudioLeadFormEnhanced({
             >
               {status.message}
             </p>
+          ) : null}
+
+          {imageUploadRejected ? (
+            <div className="form-payment-retry">
+              <p className="form-payment-retry-text" role="status">
+                {t("leadForm.imageUploadFailedInfo")}
+              </p>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={submitWithoutInspirationImage}
+                disabled={status.state === "loading"}
+              >
+                {status.state === "loading"
+                  ? t("leadForm.submitting")
+                  : t("leadForm.submitWithoutImage")}
+              </button>
+            </div>
           ) : null}
 
           {!paymentReady && !paidPaymentIntentId ? (
