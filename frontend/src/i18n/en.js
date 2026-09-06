@@ -574,6 +574,15 @@ export const en = {
   },
 
   leadForm: {
+    campaign: {
+      badge: "Offer right now",
+      deadline: "Valid through {{date}}",
+      deadlineToday: "Valid until midnight tonight",
+      note: "You get the offer automatically when you submit the form — no code needed.",
+      appliesToTattoo: "Applies to tattoo sessions.",
+      appliesToConsultation: "Applies to consultations.",
+      granted: "The offer is attached to your request."
+    },
     weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     otherStyle: "Other (style not listed)",
     otherPlacement: "Other (type it yourself)",

@@ -13,6 +13,7 @@ import { useAbandonedFormDraft } from "../hooks/useAbandonedFormDraft";
 import { getLeadSourceFromUrl, getTrackingPayload } from "../utils/tracking";
 import { prepareLeadImageUpload, MAX_INSPIRATION_IMAGE_MB } from "../utils/prepareLeadImageUpload";
 import { useLanguage, useT } from "../i18n/LanguageContext";
+import { CampaignBanner } from "./CampaignBanner";
 import { sv } from "../i18n/sv";
 import { translateOptionLabel } from "../i18n/optionLabels";
 
@@ -1213,6 +1214,14 @@ export function StudioLeadFormEnhanced({
         <p className="form-status form-status--success" role="status" aria-live="polite">
           {status.message}
         </p>
+      ) : null}
+
+      {/* Kampanjbannern ligger ovanför stegindikatorn, alltså synlig från första
+          steget — det är kunder som INTE kände till kampanjen som ska se den.
+          Filtreras på den bokningstyp kunden valt, så löftet stämmer med vad
+          backenden faktiskt stämplar på förfrågan. */}
+      {status.state !== "success" ? (
+        <CampaignBanner campaigns={studio?.campaigns} bookingType={formData.bookingType} />
       ) : null}
 
       <div

@@ -582,6 +582,18 @@ export const sv = {
   },
 
   leadForm: {
+    // Kampanjbannern ovanför formuläret. Datumet formateras i studions tidszon av
+    // formatCampaignDeadline — aldrig med new Date(endsAt).toLocaleDateString(),
+    // som hade skrivit ut dagen innan för en kund i en västligare zon.
+    campaign: {
+      badge: "Erbjudande just nu",
+      deadline: "Gäller t.o.m. {{date}}",
+      deadlineToday: "Gäller till midnatt i kväll",
+      note: "Du får erbjudandet automatiskt när du skickar in formuläret — ingen kod behövs.",
+      appliesToTattoo: "Gäller tatueringspass.",
+      appliesToConsultation: "Gäller konsultation.",
+      granted: "Erbjudandet är kopplat till din förfrågan."
+    },
     weekdays: ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"],
     otherStyle: "Annat (stilen finns inte)",
     otherPlacement: "Annat (skriv själv)",

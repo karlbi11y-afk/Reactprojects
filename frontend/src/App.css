@@ -5399,3 +5399,80 @@ html.has-reveal .steps[data-reveal]:not([data-revealed])::before {
     transform: none;
   }
 }
+
+/* ── Kampanjbanner i bokningsformuläret ───────────────────────────────────────
+   Ligger ovanför stegindikatorn, alltså synlig från första steget. Erbjudandet
+   gäller alla som skickar in under fönstret — bannern finns för dem som inte
+   kände till kampanjen. Datumet formateras i Europe/Stockholm i komponenten. */
+.campaign-banner {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 18px;
+}
+
+.campaign-banner-item {
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--success) 32%, transparent);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--success) 10%, transparent),
+    color-mix(in srgb, var(--accent) 6%, transparent)
+  );
+}
+
+.campaign-banner-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--success-text);
+  margin-bottom: 6px;
+}
+
+.campaign-banner-title {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.35;
+}
+
+.campaign-banner-text {
+  margin: 4px 0 0;
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.campaign-banner-meta {
+  margin: 8px 0 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--success-text);
+}
+
+.campaign-banner-note {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .campaign-banner-item {
+    animation: campaign-banner-in 0.4s var(--ease-out-quart) both;
+  }
+}
+
+@keyframes campaign-banner-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
